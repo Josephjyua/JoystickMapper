@@ -1,7 +1,6 @@
 from pynput.keyboard import Key, Controller as KeyboardController
 from pynput.mouse import Button, Controller as MouseController
 
-
 class Input:
 
     def __init__(self):
@@ -44,34 +43,59 @@ class Input:
             "menu": Key.menu
         }
 
+        self.mouse_buttons = {
+            "mouse_left": Button.left,
+            "mouse_right": Button.right,
+            "mouse_middle": Button.middle,
+            "mouse_x1": Button.x1,
+            "mouse_x2": Button.x2
+        }
+
     def obtener_tecla(self, accion):
         return self.special_keys.get(
             accion,
             accion
         )
 
+    def obtener_boton_mouse(self, accion):
+        return self.mouse_buttons.get(
+            accion
+        )
+
     def press(self, accion):
-        if accion == "mouse_left":
-            self.mouse.press(Button.left)
+        boton_mouse = self.obtener_boton_mouse(
+            accion
+        )
+
+        if boton_mouse is not None:
+            self.mouse.press(
+                boton_mouse
+            )
             return
 
-        if accion == "mouse_right":
-            self.mouse.press(Button.right)
-            return
+        key = self.obtener_tecla(
+            accion
+        )
 
-        key = self.obtener_tecla(accion)
-
-        self.keyboard.press(key)
+        self.keyboard.press(
+            key
+        )
 
     def release(self, accion):
-        if accion == "mouse_left":
-            self.mouse.release(Button.left)
+        boton_mouse = self.obtener_boton_mouse(
+            accion
+        )
+
+        if boton_mouse is not None:
+            self.mouse.release(
+                boton_mouse
+            )
             return
 
-        if accion == "mouse_right":
-            self.mouse.release(Button.right)
-            return
+        key = self.obtener_tecla(
+            accion
+        )
 
-        key = self.obtener_tecla(accion)
-
-        self.keyboard.release(key)
+        self.keyboard.release(
+            key
+        )

@@ -6,7 +6,7 @@ class JoystickView(ttk.Frame):
 
     def __init__(self, parent, mapper):
         super().__init__(parent)
-
+        self.trigger_seleccionado = None    
         self.boton_seleccionado = None
         self.control_tipo = None
         self.control_seleccionado = None
@@ -137,10 +137,11 @@ class JoystickView(ttk.Frame):
 
         self.crear_editor()
 
+    
     def crear_triggers(self):
         triggers_frame = ttk.LabelFrame(
             self.contenido,
-            text="Gatillos",
+            text="Gatillos - Haz clic para configurar",
             padding=10
         )
 
@@ -167,13 +168,26 @@ class JoystickView(ttk.Frame):
             pady=5
         )
 
-        ttk.Label(
+        self.trigger_left_label = tk.Label(
             triggers_frame,
-            text="LT"
-        ).grid(
+            text="LT\nSin asignar",
+            width=12,
+            height=2,
+            relief="raised",
+            borderwidth=2,
+            cursor="hand2"
+        )
+
+        self.trigger_left_label.grid(
             row=0,
             column=1,
             padx=5
+        )
+
+        self.trigger_left_label.bind(
+            "<Button-1>",
+            lambda event:
+            self.seleccionar_trigger("lt")
         )
 
         self.trigger_right = ttk.Progressbar(
@@ -191,13 +205,52 @@ class JoystickView(ttk.Frame):
             pady=5
         )
 
-        ttk.Label(
+        self.trigger_right_label = tk.Label(
             triggers_frame,
-            text="RT"
-        ).grid(
+            text="RT\nSin asignar",
+            width=12,
+            height=2,
+            relief="raised",
+            borderwidth=2,
+            cursor="hand2"
+        )
+
+        self.trigger_right_label.grid(
             row=1,
             column=1,
             padx=5
+        )
+
+        self.trigger_right_label.bind(
+            "<Button-1>",
+            lambda event:
+            self.seleccionar_trigger("rt")
+        )
+
+        self.actualizar_texto_triggers()    
+    
+    def actualizar_texto_triggers(self):
+        mapeos = self.config.get(
+            "mapeo_gatillos",
+            {}
+        )
+
+        lt = mapeos.get(
+            "lt",
+            "Sin asignar"
+        )
+
+        rt = mapeos.get(
+            "rt",
+            "Sin asignar"
+        )
+
+        self.trigger_left_label.config(
+            text=f"LT\n{lt}"
+        )
+
+        self.trigger_right_label.config(
+            text=f"RT\n{rt}"
         )
 
     def crear_botones(self):
@@ -461,6 +514,35 @@ class JoystickView(ttk.Frame):
 
         self.actualizar_seleccion_visual()
 
+
+    def seleccionar_trigger(self, direccion):
+        self.boton_seleccionado = None
+        self.control_tipo = "trigger"
+        self.control_seleccionado = direccion
+        self.trigger_seleccionado = direccion
+
+        mapeos = self.config.get(
+            "mapeo_gatillos",
+            {}
+        )
+
+        accion = mapeos.get(
+            direccion,
+            "Sin asignar"
+        )
+
+        nombre = direccion.upper()
+
+        self.boton_seleccionado_label.config(
+            text=f"Gatillo {nombre}"
+        )
+
+        self.accion_label.config(
+            text=accion
+        )
+
+        self.actualizar_seleccion_visual()
+
     def actualizar_seleccion_visual(self):
         for i, boton in enumerate(self.botones):
             if (
@@ -487,6 +569,31 @@ class JoystickView(ttk.Frame):
                 boton.config(
                     relief="raised"
                 )
+
+        if self.control_tipo == "trigger":
+            self.trigger_left_label.config(
+                relief=(
+                    "sunken"
+                    if self.control_seleccionado == "lt"
+                    else "raised"
+                )
+            )
+
+            self.trigger_right_label.config(
+                relief=(
+                    "sunken"
+                    if self.control_seleccionado == "rt"
+                    else "raised"
+                )
+            )
+        else:
+            self.trigger_left_label.config(
+                relief="raised"
+            )
+
+            self.trigger_right_label.config(
+                relief="raised"
+        )
 
     def guardar_asignacion(self):
         if self.control_tipo is None:
@@ -555,6 +662,27 @@ class JoystickView(ttk.Frame):
             self.actualizar_texto_hat(
                 self.control_seleccionado
             )
+
+        elif self.control_tipo == "trigger":
+            mapeos = self.config.get(
+                "mapeo_gatillos",
+                {}
+            )
+
+            mapeos[
+                self.control_seleccionado
+            ] = accion
+
+            self.config.set(
+                "mapeo_gatillos",
+                mapeos
+            )
+
+            self.config.guardar()
+
+            self.mapper.reload_config()
+
+            self.actualizar_texto_triggers()
 
         messagebox.showinfo(
             "Joystick Mapper",
@@ -705,6 +833,7 @@ class JoystickView(ttk.Frame):
             self.trigger_right["value"] = (
                 self.convertir_trigger(rt)
             )
+            self.actualizar_texto_triggers()
 
         mapeos_botones = self.config.get(
             "mapeo_botones",
@@ -802,7 +931,7 @@ class JoystickView(ttk.Frame):
             return
 
         self.accion_label.config(
-            text="Presiona una tecla..."
+            text="Presiona una tecla o botón del mouse..."
         )
 
         self.capturando_tecla = True
@@ -816,6 +945,12 @@ class JoystickView(ttk.Frame):
             self.capturar_tecla
         )
 
+        self.root.bind(
+            "<ButtonPress>",
+            self.capturar_mouse
+        )
+
+
     def capturar_tecla(self, event):
         if not self.capturando_tecla:
             return
@@ -826,8 +961,46 @@ class JoystickView(ttk.Frame):
             "<KeyPress>"
         )
 
+        self.root.unbind(
+            "<ButtonPress>"
+        )
+
         tecla = event.keysym.lower()
 
         self.accion_label.config(
             text=tecla
+        )
+
+
+    def capturar_mouse(self, event):
+        if not self.capturando_tecla:
+            return
+
+        botones = {
+            1: "mouse_left",
+            2: "mouse_middle",
+            3: "mouse_right",
+            4: "mouse_x1",
+            5: "mouse_x2"
+        }
+
+        accion = botones.get(
+            event.num
+        )
+
+        if accion is None:
+            return
+
+        self.capturando_tecla = False
+
+        self.root.unbind(
+            "<KeyPress>"
+        )
+
+        self.root.unbind(
+            "<ButtonPress>"
+        )
+
+        self.accion_label.config(
+            text=accion
         )

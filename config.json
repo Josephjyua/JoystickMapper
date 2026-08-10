@@ -26,18 +26,6 @@
             "eje": 1,
             "direccion": "positivo",
             "accion": "s"
-        },
-        {
-            "eje": 4,
-            "direccion": "gatillo",
-            "sensibilidad_gatillo": 0.2,
-            "accion": "mouse_right"
-        },
-        {
-            "eje": 5,
-            "direccion": "gatillo",
-            "sensibilidad_gatillo": 0.2,
-            "accion": "mouse_left"
         }
     ],
     "mapeo_botones": {
@@ -46,13 +34,18 @@
         "2": "e",
         "3": "p",
         "4": "shift",
-        "5": "ctrl_l",
-        "6": "n"
+        "5": "mouse_left",
+        "6": "n",
+        "8": "mouse_middle"
     },
     "mapeo_hat": {
         "right": "right",
         "up": "up",
         "down": "down",
         "left": "left"
+    },
+    "mapeo_gatillos": {
+        "lt": "space",
+        "rt": "mouse_right"
     }
 }
