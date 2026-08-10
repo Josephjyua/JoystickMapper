@@ -2,29 +2,29 @@ import tkinter as tk
 from tkinter import ttk, messagebox
 import threading
 
+from gui.axes import AxesView
+from gui.joystick_view import JoystickView
 from core.mapper import Mapper
 
 
 class App:
 
+    
     def __init__(self, config):
-
         self.config = config
-
         self.mapper = Mapper(self.config)
-
         self.mapper_thread = None
 
         self.root = tk.Tk()
-
         self.root.title("Joystick Mapper")
-
-        self.root.geometry("500x400")
+        self.root.geometry("800x750")
+        self.root.minsize(700, 600)
 
         self.crear_interfaz()
 
-    def crear_interfaz(self):
 
+
+    def crear_interfaz(self):
         notebook = ttk.Notebook(self.root)
 
         notebook.pack(
@@ -35,9 +35,19 @@ class App:
         )
 
         self.tab_general = ttk.Frame(notebook)
-        self.tab_mapeo = ttk.Frame(notebook)
+
+        self.tab_mapeo = AxesView(
+            notebook,
+            self.config,
+            self.mapper
+        )
+
         self.tab_botones = ttk.Frame(notebook)
-        self.tab_joystick = ttk.Frame(notebook)
+
+        self.tab_joystick = JoystickView(
+            notebook,
+            self.mapper
+        )
 
         notebook.add(
             self.tab_general,
@@ -60,35 +70,26 @@ class App:
         )
 
         self.crear_tab_general()
-        self.crear_tab_mapeo()
         self.crear_tab_botones()
-        self.crear_tab_joystick()
 
     def guardar(self):
-
         try:
-
             self.config.set(
                 "sensibilidad_mouse",
-                float(
-                    self.sensibilidad.get()
-                )
+                float(self.sensibilidad.get())
             )
 
             self.config.set(
                 "deadzone",
-                float(
-                    self.deadzone.get()
-                )
+                float(self.deadzone.get())
             )
+
             self.config.set(
                 "polling_rate_ms",
-                int(
-                    self.polling.get()
-                )
+                int(self.polling.get())
             )
-            self.config.guardar()
 
+            self.config.guardar()
             self.mapper.reload_config()
 
             messagebox.showinfo(
@@ -97,14 +98,12 @@ class App:
             )
 
         except ValueError:
-
             messagebox.showerror(
                 "Error",
                 "Valores inválidos"
             )
 
     def iniciar_mapper(self):
-
         if self.mapper.running:
             return
 
@@ -116,14 +115,12 @@ class App:
         self.mapper_thread.start()
 
     def detener_mapper(self):
-
         self.mapper.stop()
 
     def run(self):
         self.root.mainloop()
 
     def crear_tab_general(self):
-
         frame = self.tab_general
 
         frame.columnconfigure(1, weight=1)
@@ -269,28 +266,9 @@ class App:
             pady=5
         )
 
-    def crear_tab_mapeo(self):
-
-        ttk.Label(
-            self.tab_mapeo,
-            text="Próximamente"
-        ).pack(
-            pady=30
-        )
-
     def crear_tab_botones(self):
-
         ttk.Label(
             self.tab_botones,
-            text="Próximamente"
-        ).pack(
-            pady=30
-        )
-
-    def crear_tab_joystick(self):
-
-        ttk.Label(
-            self.tab_joystick,
             text="Próximamente"
         ).pack(
             pady=30
