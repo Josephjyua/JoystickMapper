@@ -1,9 +1,30 @@
-
 import tkinter as tk
 from tkinter import ttk, messagebox
 
 
 class ButtonsView(ttk.Frame):
+
+    ACCIONES = [
+        "space",
+        "enter",
+        "esc",
+        "tab",
+        "shift",
+        "ctrl_l",
+        "alt",
+        "cmd",
+        "w",
+        "a",
+        "s",
+        "d",
+        "e",
+        "r",
+        "q",
+        "f",
+        "c",
+        "mouse_left",
+        "mouse_right"
+    ]
 
     def __init__(self, parent, config, mapper):
         super().__init__(parent)
@@ -12,34 +33,14 @@ class ButtonsView(ttk.Frame):
         self.mapper = mapper
         self.joystick = mapper.joystick
 
-        self.botones = {}
-        self.boton_anterior = {}
-
-        self.acciones = [
-            "",
-            "a", "b", "c", "d", "e", "f", "g",
-            "h", "i", "j", "k", "l", "m", "n",
-            "o", "p", "q", "r", "s", "t", "u",
-            "v", "w", "x", "y", "z",
-            "space",
-            "shift",
-            "ctrl_l",
-            "alt",
-            "tab",
-            "enter",
-            "esc",
-            "mouse_left",
-            "mouse_right"
-        ]
-
-        self.boton_detectado = None
-        self.detectando = False
+        self.botones = []
+        self.boton_seleccionado = None
 
         self.crear_interfaz()
-        self.actualizar()
 
     def crear_interfaz(self):
         self.columnconfigure(0, weight=1)
+        self.rowconfigure(1, weight=1)
 
         ttk.Label(
             self,
@@ -48,220 +49,203 @@ class ButtonsView(ttk.Frame):
         ).grid(
             row=0,
             column=0,
-            pady=(10, 5)
+            pady=10
+        )
+
+        frame = ttk.Frame(self)
+        frame.grid(
+            row=1,
+            column=0,
+            sticky="nsew",
+            padx=20,
+            pady=10
+        )
+
+        frame.columnconfigure(0, weight=1)
+        frame.columnconfigure(1, weight=1)
+
+        for i in range(self.joystick.buttons_count()):
+            accion = self.config.get(
+                "mapeo_botones",
+                {}
+            ).get(
+                str(i),
+                "Sin asignar"
+            )
+
+            boton = tk.Button(
+                frame,
+                text=f"Botón {i}\n→ {accion}",
+                width=18,
+                height=3,
+                command=lambda indice=i: self.seleccionar_boton(indice)
+            )
+
+            boton.grid(
+                row=i // 2,
+                column=i % 2,
+                padx=8,
+                pady=8,
+                sticky="ew"
+            )
+
+            self.botones.append(boton)
+
+        self.editor = ttk.LabelFrame(
+            self,
+            text="Asignación",
+            padding=15
+        )
+
+        self.editor.grid(
+            row=2,
+            column=0,
+            sticky="ew",
+            padx=20,
+            pady=10
+        )
+
+        self.editor.columnconfigure(1, weight=1)
+
+        ttk.Label(
+            self.editor,
+            text="Botón:"
+        ).grid(
+            row=0,
+            column=0,
+            sticky="w",
+            padx=5,
+            pady=5
+        )
+
+        self.boton_label = ttk.Label(
+            self.editor,
+            text="Ninguno seleccionado"
+        )
+
+        self.boton_label.grid(
+            row=0,
+            column=1,
+            sticky="w",
+            padx=5,
+            pady=5
         )
 
         ttk.Label(
-            self,
-            text="Presiona un botón del mando para identificarlo"
+            self.editor,
+            text="Acción:"
         ).grid(
             row=1,
             column=0,
-            pady=(0, 15)
+            sticky="w",
+            padx=5,
+            pady=5
         )
 
-        self.frame_botones = ttk.Frame(self)
+        self.accion = tk.StringVar()
 
-        self.frame_botones.grid(
-            row=2,
-            column=0,
-            sticky="nsew",
-            padx=20
+        self.combo_accion = ttk.Combobox(
+            self.editor,
+            textvariable=self.accion,
+            values=self.ACCIONES,
+            state="readonly"
         )
 
-        self.crear_botones()
+        self.combo_accion.grid(
+            row=1,
+            column=1,
+            sticky="ew",
+            padx=5,
+            pady=5
+        )
 
         ttk.Button(
-            self,
-            text="Guardar mapeos",
-            command=self.guardar
+            self.editor,
+            text="Guardar asignación",
+            command=self.guardar_asignacion
         ).grid(
-            row=3,
+            row=2,
             column=0,
-            pady=20
+            columnspan=2,
+            sticky="ew",
+            padx=5,
+            pady=10
         )
 
-    def crear_botones(self):
-        mapeo = self.config.get(
+    def seleccionar_boton(self, indice):
+        self.boton_seleccionado = indice
+
+        mapeos = self.config.get(
             "mapeo_botones",
             {}
         )
 
-        cantidad = self.joystick.buttons_count()
-
-        for i in range(cantidad):
-            fila = i // 2
-            columna = i % 2
-
-            frame = ttk.LabelFrame(
-                self.frame_botones,
-                text=f"Botón {i}",
-                padding=10
-            )
-
-            frame.grid(
-                row=fila,
-                column=columna,
-                sticky="ew",
-                padx=5,
-                pady=5
-            )
-
-            self.frame_botones.columnconfigure(
-                columna,
-                weight=1
-            )
-
-            ttk.Label(
-                frame,
-                text="Acción:"
-            ).grid(
-                row=0,
-                column=0,
-                padx=5
-            )
-
-            variable = tk.StringVar(
-                value=mapeo.get(
-                    str(i),
-                    ""
-                )
-            )
-
-            combo = ttk.Combobox(
-                frame,
-                textvariable=variable,
-                values=self.acciones,
-                state="readonly",
-                width=18
-            )
-
-            combo.grid(
-                row=0,
-                column=1,
-                padx=5
-            )
-
-            detectar = ttk.Button(
-                frame,
-                text="Detectar",
-                command=lambda idx=i: self.iniciar_deteccion(idx)
-            )
-
-            detectar.grid(
-                row=0,
-                column=2,
-                padx=5
-            )
-
-            self.botones[i] = {
-                "variable": variable,
-                "frame": frame,
-                "detectar": detectar
-            }
-
-            self.boton_anterior[i] = False
-
-    def iniciar_deteccion(self, boton):
-        if self.detectando:
-            return
-
-        self.detectando = True
-        self.boton_detectado = boton
-
-        self.botones[boton]["detectar"].config(
-            text="Esperando..."
+        accion = mapeos.get(
+            str(indice),
+            ""
         )
 
-        for idx, datos in self.botones.items():
-            if idx != boton:
-                datos["detectar"].config(
-                    state="disabled"
-                )
+        self.boton_label.config(
+            text=f"Botón {indice}"
+        )
 
-    def cancelar_deteccion(self):
-        self.detectando = False
-        self.boton_detectado = None
+        self.accion.set(accion)
 
-        for datos in self.botones.values():
-            datos["detectar"].config(
-                text="Detectar",
-                state="normal"
-            )
-
-    def detectar_boton(self):
-        if not self.detectando:
-            return
-
-        for boton in range(
-            self.joystick.buttons_count()
-        ):
-            actual = self.joystick.get_button(boton)
-            anterior = self.boton_anterior.get(
-                boton,
-                False
-            )
-
-            if actual and not anterior:
-                self.botones[
-                    self.boton_detectado
-                ]["variable"].set(
-                    str(boton)
-                )
-
-                self.cancelar_deteccion()
-                return
-
-    def actualizar_estados(self):
-        for boton, datos in self.botones.items():
-            presionado = self.joystick.get_button(
-                boton
-            )
-
-            if presionado:
-                datos["frame"].configure(
+        for i, boton in enumerate(self.botones):
+            if i == indice:
+                boton.config(
                     relief="sunken"
                 )
             else:
-                datos["frame"].configure(
+                boton.config(
                     relief="raised"
                 )
 
-            self.boton_anterior[boton] = presionado
+    def guardar_asignacion(self):
+        if self.boton_seleccionado is None:
+            messagebox.showwarning(
+                "Joystick Mapper",
+                "Selecciona un botón primero."
+            )
+            return
 
-    def actualizar(self):
-        self.detectar_boton()
-        self.actualizar_estados()
+        accion = self.accion.get()
 
-        self.after(
-            50,
-            self.actualizar
-        )
+        if not accion:
+            messagebox.showwarning(
+                "Joystick Mapper",
+                "Selecciona una acción."
+            )
+            return
 
-    def guardar(self):
-        mapeo = self.config.get(
+        mapeos = self.config.get(
             "mapeo_botones",
             {}
-        ).copy()
+        )
 
-        for boton, datos in self.botones.items():
-            accion = datos["variable"].get()
-
-            if accion:
-                mapeo[str(boton)] = accion
-            elif str(boton) in mapeo:
-                del mapeo[str(boton)]
+        mapeos[str(
+            self.boton_seleccionado
+        )] = accion
 
         self.config.set(
             "mapeo_botones",
-            mapeo
+            mapeos
         )
 
         self.config.guardar()
         self.mapper.reload_config()
 
-        messagebox.showinfo(
-            "Joystick Mapper",
-            "Mapeos guardados"
+        self.botones[
+            self.boton_seleccionado
+        ].config(
+            text=(
+                f"Botón "
+                f"{self.boton_seleccionado}\n"
+                f"→ {accion}"
+            )
         )
 
+        messagebox.showinfo(
+            "Joystick Mapper",
+            "Asignación guardada."
+        )

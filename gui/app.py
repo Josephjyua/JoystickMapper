@@ -1,15 +1,16 @@
+
 import tkinter as tk
 from tkinter import ttk, messagebox
 import threading
 
 from gui.axes import AxesView
 from gui.joystick_view import JoystickView
-from core.mapper import Mapper
 from gui.buttons import ButtonsView
+from core.mapper import Mapper
+
 
 class App:
 
-    
     def __init__(self, config):
         self.config = config
         self.mapper = Mapper(self.config)
@@ -22,11 +23,8 @@ class App:
 
         self.crear_interfaz()
 
-
-
     def crear_interfaz(self):
         notebook = ttk.Notebook(self.root)
-
         notebook.pack(
             fill="both",
             expand=True,
@@ -125,7 +123,6 @@ class App:
 
     def crear_tab_general(self):
         frame = self.tab_general
-
         frame.columnconfigure(1, weight=1)
 
         ttk.Label(
@@ -268,5 +265,4 @@ class App:
             padx=10,
             pady=5
         )
-
 

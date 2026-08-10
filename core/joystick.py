@@ -2,6 +2,8 @@ import pygame
 
 BUTTON_DOWN = pygame.JOYBUTTONDOWN
 BUTTON_UP = pygame.JOYBUTTONUP
+AXIS_MOTION = pygame.JOYAXISMOTION
+HAT_MOTION = pygame.JOYHATMOTION
 
 
 class Joystick:
@@ -16,18 +18,16 @@ class Joystick:
         self.device = pygame.joystick.Joystick(0)
         self.device.init()
 
-        self._events = []
+        print(f"[+] Mando detectado: {self.device.get_name()}")
+        print(f"[+] Botones: {self.buttons_count()}")
+        print(f"[+] Ejes: {self.axes_count()}")
+        print(f"[+] HATs: {self.hats_count()}")
 
-        print(
-            f"[+] Mando detectado: {self.device.get_name()}"
-        )
+    def name(self):
+        return self.device.get_name()
 
     def update(self):
         pygame.event.pump()
-        self._events = pygame.event.get()
-
-    def events(self):
-        return self._events
 
     def get_axis(self, axis):
         return self.device.get_axis(axis)
@@ -35,21 +35,20 @@ class Joystick:
     def axes_count(self):
         return self.device.get_numaxes()
 
-    def buttons_count(self):
-        return self.device.get_numbuttons()
-
     def get_button(self, button):
         return self.device.get_button(button)
 
-    def hats_count(self):
-        return self.device.get_numhats()
+    def buttons_count(self):
+        return self.device.get_numbuttons()
 
     def get_hat(self, hat):
         return self.device.get_hat(hat)
 
-    def name(self):
-        return self.device.get_name()
+    def hats_count(self):
+        return self.device.get_numhats()
+
+    def events(self):
+        return pygame.event.get()
 
     def close(self):
         pygame.quit()
-

@@ -1,6 +1,5 @@
-
 import tkinter as tk
-from tkinter import ttk
+from tkinter import ttk, messagebox
 
 
 class JoystickView(ttk.Frame):
@@ -8,8 +7,14 @@ class JoystickView(ttk.Frame):
     def __init__(self, parent, mapper):
         super().__init__(parent)
 
+        self.boton_seleccionado = None
+        self.control_tipo = None
+        self.control_seleccionado = None
+        self.capturando_tecla = False
+
         self.mapper = mapper
         self.joystick = mapper.joystick
+        self.config = mapper.config
 
         self.sticks = []
         self.botones = []
@@ -86,9 +91,11 @@ class JoystickView(ttk.Frame):
     def crear_contenido(self):
         self.contenido.columnconfigure(0, weight=1)
 
+        nombre = self.joystick.device.get_name()
+
         ttk.Label(
             self.contenido,
-            text=self.joystick.name(),
+            text=nombre,
             font=("TkDefaultFont", 14, "bold")
         ).grid(
             row=0,
@@ -122,6 +129,15 @@ class JoystickView(ttk.Frame):
             1
         )
 
+        self.crear_triggers()
+
+        self.crear_botones()
+
+        self.crear_dpad()
+
+        self.crear_editor()
+
+    def crear_triggers(self):
         triggers_frame = ttk.LabelFrame(
             self.contenido,
             text="Gatillos",
@@ -184,9 +200,10 @@ class JoystickView(ttk.Frame):
             padx=5
         )
 
+    def crear_botones(self):
         botones_frame = ttk.LabelFrame(
             self.contenido,
-            text="Botones",
+            text="Botones - Haz clic para configurar",
             padding=10
         )
 
@@ -197,15 +214,27 @@ class JoystickView(ttk.Frame):
             pady=10
         )
 
+        mapeos = self.config.get(
+            "mapeo_botones",
+            {}
+        )
+
         for i in range(
             self.joystick.buttons_count()
         ):
+            accion = mapeos.get(
+                str(i),
+                "Sin asignar"
+            )
+
             boton = tk.Label(
                 botones_frame,
-                text=str(i),
-                width=10,
-                height=2,
-                relief="raised"
+                text=f"Botón {i}\n{accion}",
+                width=14,
+                height=3,
+                relief="raised",
+                borderwidth=2,
+                cursor="hand2"
             )
 
             boton.grid(
@@ -215,9 +244,13 @@ class JoystickView(ttk.Frame):
                 pady=5
             )
 
-            self.botones.append(boton)
+            boton.bind(
+                "<Button-1>",
+                lambda event, indice=i:
+                self.seleccionar_boton(indice)
+            )
 
-        self.crear_dpad()
+            self.botones.append(boton)
 
     def crear_dpad(self):
         if self.joystick.hats_count() == 0:
@@ -225,7 +258,7 @@ class JoystickView(ttk.Frame):
 
         dpad_frame = ttk.LabelFrame(
             self.contenido,
-            text="Cruceta",
+            text="Cruceta - Haz clic para configurar",
             padding=15
         )
 
@@ -242,14 +275,25 @@ class JoystickView(ttk.Frame):
             "down": (2, 1)
         }
 
+        mapeos = self.config.get(
+            "mapeo_hat",
+            {}
+        )
+
         for nombre, posicion in posiciones.items():
+            accion = mapeos.get(
+                nombre,
+                "Sin asignar"
+            )
 
             boton = tk.Label(
                 dpad_frame,
-                text=nombre.upper(),
-                width=10,
+                text=f"{nombre.upper()}\n{accion}",
+                width=12,
                 height=3,
-                relief="raised"
+                relief="raised",
+                borderwidth=2,
+                cursor="hand2"
             )
 
             boton.grid(
@@ -259,9 +303,296 @@ class JoystickView(ttk.Frame):
                 pady=5
             )
 
+            boton.bind(
+                "<Button-1>",
+                lambda event, direccion=nombre:
+                self.seleccionar_hat(direccion)
+            )
+
             self.hats.append(
                 (nombre, boton)
             )
+
+    def crear_editor(self):
+        self.editor_frame = ttk.LabelFrame(
+            self.contenido,
+            text="Configuración del control",
+            padding=15
+        )
+
+        self.editor_frame.grid(
+            row=5,
+            column=0,
+            sticky="ew",
+            padx=20,
+            pady=10
+        )
+
+        self.editor_frame.columnconfigure(
+            1,
+            weight=1
+        )
+
+        ttk.Label(
+            self.editor_frame,
+            text="Control seleccionado:"
+        ).grid(
+            row=0,
+            column=0,
+            sticky="w",
+            padx=5,
+            pady=5
+        )
+
+        self.boton_seleccionado_label = ttk.Label(
+            self.editor_frame,
+            text="Ninguno"
+        )
+
+        self.boton_seleccionado_label.grid(
+            row=0,
+            column=1,
+            sticky="w",
+            padx=5,
+            pady=5
+        )
+
+        ttk.Label(
+            self.editor_frame,
+            text="Asignación:"
+        ).grid(
+            row=1,
+            column=0,
+            sticky="w",
+            padx=5,
+            pady=5
+        )
+
+        self.accion_label = ttk.Label(
+            self.editor_frame,
+            text="Sin asignar"
+        )
+
+        self.accion_label.grid(
+            row=1,
+            column=1,
+            sticky="w",
+            padx=5,
+            pady=5
+        )
+
+        self.capturar_button = ttk.Button(
+            self.editor_frame,
+            text="Presionar tecla",
+            command=self.iniciar_captura_tecla
+        )
+
+        self.capturar_button.grid(
+            row=2,
+            column=0,
+            columnspan=2,
+            sticky="ew",
+            padx=5,
+            pady=5
+        )
+
+        self.guardar_button = ttk.Button(
+            self.editor_frame,
+            text="Guardar asignación",
+            command=self.guardar_asignacion
+        )
+
+        self.guardar_button.grid(
+            row=3,
+            column=0,
+            columnspan=2,
+            sticky="ew",
+            padx=5,
+            pady=5
+        )
+
+    def seleccionar_boton(self, indice):
+        self.boton_seleccionado = indice
+        self.control_tipo = "boton"
+        self.control_seleccionado = str(indice)
+
+        mapeos = self.config.get(
+            "mapeo_botones",
+            {}
+        )
+
+        accion = mapeos.get(
+            str(indice),
+            "Sin asignar"
+        )
+
+        self.boton_seleccionado_label.config(
+            text=f"Botón {indice}"
+        )
+
+        self.accion_label.config(
+            text=accion
+        )
+
+        self.actualizar_seleccion_visual()
+
+    def seleccionar_hat(self, direccion):
+        self.boton_seleccionado = None
+        self.control_tipo = "hat"
+        self.control_seleccionado = direccion
+
+        mapeos = self.config.get(
+            "mapeo_hat",
+            {}
+        )
+
+        accion = mapeos.get(
+            direccion,
+            "Sin asignar"
+        )
+
+        self.boton_seleccionado_label.config(
+            text=f"Cruceta {direccion.upper()}"
+        )
+
+        self.accion_label.config(
+            text=accion
+        )
+
+        self.actualizar_seleccion_visual()
+
+    def actualizar_seleccion_visual(self):
+        for i, boton in enumerate(self.botones):
+            if (
+                self.control_tipo == "boton"
+                and str(i) == self.control_seleccionado
+            ):
+                boton.config(
+                    relief="sunken"
+                )
+            else:
+                boton.config(
+                    relief="raised"
+                )
+
+        for nombre, boton in self.hats:
+            if (
+                self.control_tipo == "hat"
+                and nombre == self.control_seleccionado
+            ):
+                boton.config(
+                    relief="sunken"
+                )
+            else:
+                boton.config(
+                    relief="raised"
+                )
+
+    def guardar_asignacion(self):
+        if self.control_tipo is None:
+            messagebox.showwarning(
+                "Joystick Mapper",
+                "Selecciona un control primero."
+            )
+            return
+
+        accion = self.accion_label.cget(
+            "text"
+        )
+
+        if (
+            accion == "Sin asignar"
+            or accion == "Presiona una tecla..."
+        ):
+            messagebox.showwarning(
+                "Joystick Mapper",
+                "Presiona una tecla primero."
+            )
+            return
+
+        if self.control_tipo == "boton":
+            mapeos = self.config.get(
+                "mapeo_botones",
+                {}
+            )
+
+            mapeos[
+                self.control_seleccionado
+            ] = accion
+
+            self.config.set(
+                "mapeo_botones",
+                mapeos
+            )
+
+            self.config.guardar()
+
+            self.mapper.reload_config()
+
+            self.actualizar_texto_boton(
+                int(self.control_seleccionado)
+            )
+
+        elif self.control_tipo == "hat":
+            mapeos = self.config.get(
+                "mapeo_hat",
+                {}
+            )
+
+            mapeos[
+                self.control_seleccionado
+            ] = accion
+
+            self.config.set(
+                "mapeo_hat",
+                mapeos
+            )
+
+            self.config.guardar()
+
+            self.mapper.reload_config()
+
+            self.actualizar_texto_hat(
+                self.control_seleccionado
+            )
+
+        messagebox.showinfo(
+            "Joystick Mapper",
+            "Asignación guardada."
+        )
+
+    def actualizar_texto_boton(self, indice):
+        mapeos = self.config.get(
+            "mapeo_botones",
+            {}
+        )
+
+        accion = mapeos.get(
+            str(indice),
+            "Sin asignar"
+        )
+
+        self.botones[indice].config(
+            text=f"Botón {indice}\n{accion}"
+        )
+
+    def actualizar_texto_hat(self, direccion):
+        mapeos = self.config.get(
+            "mapeo_hat",
+            {}
+        )
+
+        accion = mapeos.get(
+            direccion,
+            "Sin asignar"
+        )
+
+        for nombre, boton in self.hats:
+            if nombre == direccion:
+                boton.config(
+                    text=f"{nombre.upper()}\n{accion}"
+                )
+                break
 
     def crear_stick(
         self,
@@ -327,7 +658,10 @@ class JoystickView(ttk.Frame):
         })
 
     def convertir_trigger(self, valor):
-        porcentaje = (valor + 1.0) / 2.0
+        porcentaje = (
+            valor + 1.0
+        ) / 2.0
+
         porcentaje = max(
             0.0,
             min(1.0, porcentaje)
@@ -336,9 +670,7 @@ class JoystickView(ttk.Frame):
         return porcentaje * 100
 
     def actualizar(self):
-
         for stick in self.sticks:
-
             eje_x = stick["eje_x"]
             eje_y = stick["eje_y"]
 
@@ -363,7 +695,6 @@ class JoystickView(ttk.Frame):
             )
 
         if self.joystick.axes_count() >= 6:
-
             lt = self.joystick.get_axis(4)
             rt = self.joystick.get_axis(5)
 
@@ -375,23 +706,49 @@ class JoystickView(ttk.Frame):
                 self.convertir_trigger(rt)
             )
 
-        for i, boton in enumerate(self.botones):
+        mapeos_botones = self.config.get(
+            "mapeo_botones",
+            {}
+        )
 
+        for i, boton in enumerate(self.botones):
             presionado = self.joystick.get_button(i)
 
             if presionado:
                 boton.config(
                     relief="sunken",
-                    text=f"{i}\nPRESIONADO"
+                    text=(
+                        f"Botón {i}\n"
+                        f"PRESIONADO"
+                    )
                 )
             else:
-                boton.config(
-                    relief="raised",
-                    text=str(i)
+                accion = mapeos_botones.get(
+                    str(i),
+                    "Sin asignar"
                 )
 
-        if self.joystick.hats_count() > 0:
+                boton.config(
+                    relief=(
+                        "sunken"
+                        if (
+                            self.control_tipo == "boton"
+                            and str(i) == self.control_seleccionado
+                        )
+                        else "raised"
+                    ),
+                    text=(
+                        f"Botón {i}\n"
+                        f"{accion}"
+                    )
+                )
 
+        mapeos_hat = self.config.get(
+            "mapeo_hat",
+            {}
+        )
+
+        if self.joystick.hats_count() > 0:
             x, y = self.joystick.get_hat(0)
 
             estados = {
@@ -402,16 +759,33 @@ class JoystickView(ttk.Frame):
             }
 
             for nombre, boton in self.hats:
+                accion = mapeos_hat.get(
+                    nombre,
+                    "Sin asignar"
+                )
 
                 if estados[nombre]:
                     boton.config(
                         relief="sunken",
-                        text=f"{nombre.upper()}\nPRESIONADO"
+                        text=(
+                            f"{nombre.upper()}\n"
+                            f"PRESIONADO"
+                        )
                     )
                 else:
                     boton.config(
-                        relief="raised",
-                        text=nombre.upper()
+                        relief=(
+                            "sunken"
+                            if (
+                                self.control_tipo == "hat"
+                                and nombre == self.control_seleccionado
+                            )
+                            else "raised"
+                        ),
+                        text=(
+                            f"{nombre.upper()}\n"
+                            f"{accion}"
+                        )
                     )
 
         self.after(
@@ -419,3 +793,41 @@ class JoystickView(ttk.Frame):
             self.actualizar
         )
 
+    def iniciar_captura_tecla(self):
+        if self.control_tipo is None:
+            messagebox.showwarning(
+                "Joystick Mapper",
+                "Selecciona un control primero."
+            )
+            return
+
+        self.accion_label.config(
+            text="Presiona una tecla..."
+        )
+
+        self.capturando_tecla = True
+
+        self.root = self.winfo_toplevel()
+
+        self.root.focus_force()
+
+        self.root.bind(
+            "<KeyPress>",
+            self.capturar_tecla
+        )
+
+    def capturar_tecla(self, event):
+        if not self.capturando_tecla:
+            return
+
+        self.capturando_tecla = False
+
+        self.root.unbind(
+            "<KeyPress>"
+        )
+
+        tecla = event.keysym.lower()
+
+        self.accion_label.config(
+            text=tecla
+        )

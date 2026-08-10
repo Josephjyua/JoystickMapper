@@ -44,8 +44,15 @@
         "0": "space",
         "1": "c",
         "2": "e",
-        "3": "r",
+        "3": "p",
         "4": "shift",
-        "5": "ctrl_l"
+        "5": "ctrl_l",
+        "6": "n"
+    },
+    "mapeo_hat": {
+        "right": "right",
+        "up": "up",
+        "down": "down",
+        "left": "left"
     }
 }
