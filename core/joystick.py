@@ -16,10 +16,18 @@ class Joystick:
         self.device = pygame.joystick.Joystick(0)
         self.device.init()
 
-        print(f"[+] Mando detectado: {self.device.get_name()}")
+        self._events = []
+
+        print(
+            f"[+] Mando detectado: {self.device.get_name()}"
+        )
 
     def update(self):
         pygame.event.pump()
+        self._events = pygame.event.get()
+
+    def events(self):
+        return self._events
 
     def get_axis(self, axis):
         return self.device.get_axis(axis)
@@ -41,9 +49,6 @@ class Joystick:
 
     def name(self):
         return self.device.get_name()
-
-    def events(self):
-        return pygame.event.get()
 
     def close(self):
         pygame.quit()

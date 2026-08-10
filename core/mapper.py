@@ -139,9 +139,7 @@ class Mapper:
         self.running = True
 
         try:
-
             while self.running:
-
                 self.joystick.update()
                 self.procesar_ejes_teclas()
                 self.procesar_mouse()
@@ -158,7 +156,6 @@ class Mapper:
             print("\n[+] Cerrando mapper")
 
         finally:
-
             self.running = False
             self.liberar_estado()
 

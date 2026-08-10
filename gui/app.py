@@ -5,7 +5,7 @@ import threading
 from gui.axes import AxesView
 from gui.joystick_view import JoystickView
 from core.mapper import Mapper
-
+from gui.buttons import ButtonsView
 
 class App:
 
@@ -42,7 +42,11 @@ class App:
             self.mapper
         )
 
-        self.tab_botones = ttk.Frame(notebook)
+        self.tab_botones = ButtonsView(
+            notebook,
+            self.config,
+            self.mapper
+        )
 
         self.tab_joystick = JoystickView(
             notebook,
@@ -70,7 +74,6 @@ class App:
         )
 
         self.crear_tab_general()
-        self.crear_tab_botones()
 
     def guardar(self):
         try:
@@ -266,11 +269,4 @@ class App:
             pady=5
         )
 
-    def crear_tab_botones(self):
-        ttk.Label(
-            self.tab_botones,
-            text="Próximamente"
-        ).pack(
-            pady=30
-        )
 
