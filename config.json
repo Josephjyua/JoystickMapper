@@ -1,0 +1,51 @@
+{
+    "sensibilidad_mouse": 15.0,
+    "deadzone": 0.15,
+    "polling_rate_ms": 10,
+    "ejes_config": {
+        "rs_horizontal": 2,
+        "rs_vertical": 3
+    },
+    "mapeo_ejes_a_teclas": [
+        {
+            "eje": 0,
+            "direccion": "negativo",
+            "accion": "a"
+        },
+        {
+            "eje": 0,
+            "direccion": "positivo",
+            "accion": "d"
+        },
+        {
+            "eje": 1,
+            "direccion": "negativo",
+            "accion": "w"
+        },
+        {
+            "eje": 1,
+            "direccion": "positivo",
+            "accion": "s"
+        },
+        {
+            "eje": 4,
+            "direccion": "gatillo",
+            "sensibilidad_gatillo": 0.2,
+            "accion": "mouse_right"
+        },
+        {
+            "eje": 5,
+            "direccion": "gatillo",
+            "sensibilidad_gatillo": 0.2,
+            "accion": "mouse_left"
+        }
+    ],
+    "mapeo_botones": {
+        "0": "space",
+        "1": "c",
+        "2": "e",
+        "3": "r",
+        "4": "shift",
+        "5": "ctrl_l"
+    }
+}
