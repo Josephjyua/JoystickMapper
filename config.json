@@ -1,10 +1,11 @@
 {
-    "sensibilidad_mouse": 15.0,
-    "deadzone": 0.15,
+    "sensibilidad_mouse": 21.5,
+    "deadzone": 0.16,
     "polling_rate_ms": 10,
     "ejes_config": {
         "rs_horizontal": 2,
-        "rs_vertical": 3
+        "rs_vertical": 3,
+        "mouse_enabled": false
     },
     "mapeo_ejes_a_teclas": [
         {
@@ -36,7 +37,8 @@
         "4": "shift",
         "5": "mouse_left",
         "6": "n",
-        "8": "mouse_middle"
+        "8": "mouse_middle",
+        "11": "v"
     },
     "mapeo_hat": {
         "right": "right",

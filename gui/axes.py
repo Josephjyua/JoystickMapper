@@ -13,15 +13,18 @@ class AxesView(ttk.Frame):
         self.crear_interfaz()
         self.cargar_datos()
 
-
     def crear_interfaz(self):
-
         self.columnconfigure(0, weight=1)
         self.rowconfigure(0, weight=1)
 
         self.tree = ttk.Treeview(
             self,
-            columns=("eje", "direccion", "accion", "sensibilidad"),
+            columns=(
+                "eje",
+                "direccion",
+                "accion",
+                "sensibilidad"
+            ),
             show="headings"
         )
 
@@ -47,7 +50,7 @@ class AxesView(ttk.Frame):
 
         self.tree.column(
             "eje",
-            width=60,
+            width=70,
             anchor="center"
         )
 
@@ -146,9 +149,7 @@ class AxesView(ttk.Frame):
             lambda event: self.editar()
         )
 
-
     def cargar_datos(self):
-
         for item in self.tree.get_children():
             self.tree.delete(item)
 
@@ -158,7 +159,6 @@ class AxesView(ttk.Frame):
         )
 
         for regla in reglas:
-
             sensibilidad = regla.get(
                 "sensibilidad_gatillo",
                 "-"
@@ -175,9 +175,7 @@ class AxesView(ttk.Frame):
                 )
             )
 
-
     def obtener_seleccion(self):
-
         seleccion = self.tree.selection()
 
         if not seleccion:
@@ -189,19 +187,32 @@ class AxesView(ttk.Frame):
 
         return seleccion[0]
 
+    def abrir_editor(self, item=None):
+        editar = item is not None
 
-    def abrir_editor(self, valores=None):
+        valores = None
+
+        if editar:
+            valores = self.tree.item(
+                item,
+                "values"
+            )
 
         ventana = tk.Toplevel(self)
 
         ventana.title(
             "Editar eje"
-            if valores
+            if editar
             else "Agregar eje"
         )
 
         ventana.geometry(
-            "350x250"
+            "380x300"
+        )
+
+        ventana.resizable(
+            False,
+            False
         )
 
         ventana.transient(
@@ -209,6 +220,8 @@ class AxesView(ttk.Frame):
         )
 
         ventana.grab_set()
+
+        # Eje
 
         ttk.Label(
             ventana,
@@ -220,9 +233,11 @@ class AxesView(ttk.Frame):
         )
 
         eje = tk.StringVar(
-            value=str(valores[0])
-            if valores
-            else "0"
+            value=(
+                str(valores[0])
+                if valores
+                else "0"
+            )
         )
 
         ttk.Entry(
@@ -232,6 +247,8 @@ class AxesView(ttk.Frame):
             fill="x",
             padx=15
         )
+
+        # Dirección
 
         ttk.Label(
             ventana,
@@ -243,9 +260,11 @@ class AxesView(ttk.Frame):
         )
 
         direccion = tk.StringVar(
-            value=valores[1]
-            if valores
-            else "negativo"
+            value=(
+                valores[1]
+                if valores
+                else "negativo"
+            )
         )
 
         ttk.Combobox(
@@ -262,6 +281,8 @@ class AxesView(ttk.Frame):
             padx=15
         )
 
+        # Acción
+
         ttk.Label(
             ventana,
             text="Acción"
@@ -272,9 +293,11 @@ class AxesView(ttk.Frame):
         )
 
         accion = tk.StringVar(
-            value=valores[2]
-            if valores
-            else "a"
+            value=(
+                valores[2]
+                if valores
+                else "a"
+            )
         )
 
         ttk.Entry(
@@ -285,9 +308,11 @@ class AxesView(ttk.Frame):
             padx=15
         )
 
+        # Sensibilidad
+
         ttk.Label(
             ventana,
-            text="Sensibilidad gatillo"
+            text="Sensibilidad del gatillo"
         ).pack(
             anchor="w",
             padx=15,
@@ -295,9 +320,11 @@ class AxesView(ttk.Frame):
         )
 
         sensibilidad = tk.StringVar(
-            value=str(valores[3])
-            if valores and valores[3] != "-"
-            else "0.2"
+            value=(
+                valores[3]
+                if valores and valores[3] != "-"
+                else "0.2"
+            )
         )
 
         ttk.Entry(
@@ -309,10 +336,14 @@ class AxesView(ttk.Frame):
         )
 
         def aceptar():
-
             try:
-                eje_num = int(eje.get())
-                sens = float(sensibilidad.get())
+                eje_num = int(
+                    eje.get()
+                )
+
+                sens = float(
+                    sensibilidad.get()
+                )
 
                 if eje_num < 0:
                     raise ValueError
@@ -320,26 +351,35 @@ class AxesView(ttk.Frame):
                 if not 0 <= sens <= 1:
                     raise ValueError
 
-            except ValueError:
+                if not accion.get().strip():
+                    raise ValueError
 
+            except ValueError:
                 messagebox.showerror(
                     "Error",
                     "Los valores ingresados no son válidos.",
                     parent=ventana
                 )
-
                 return
 
-            self.tree.insert(
-                "",
-                "end",
-                values=(
-                    eje_num,
-                    direccion.get(),
-                    accion.get(),
-                    sens
-                )
+            valores_nuevos = (
+                eje_num,
+                direccion.get(),
+                accion.get().strip(),
+                sens if direccion.get() == "gatillo" else "-"
             )
+
+            if editar:
+                self.tree.item(
+                    item,
+                    values=valores_nuevos
+                )
+            else:
+                self.tree.insert(
+                    "",
+                    "end",
+                    values=valores_nuevos
+                )
 
             ventana.destroy()
 
@@ -348,162 +388,75 @@ class AxesView(ttk.Frame):
             text="Aceptar",
             command=aceptar
         ).pack(
-            pady=15
+            pady=20
         )
 
-
     def agregar(self):
-
         self.abrir_editor()
 
-
     def editar(self):
-
         item = self.obtener_seleccion()
 
         if item is None:
             return
 
-        valores = self.tree.item(
-            item,
-            "values"
-        )
-
-        ventana = tk.Toplevel(self)
-
-        ventana.title("Editar eje")
-        ventana.geometry("350x250")
-        ventana.transient(self.winfo_toplevel())
-        ventana.grab_set()
-
-        ttk.Label(
-            ventana,
-            text="Eje"
-        ).pack(anchor="w", padx=15, pady=(15, 5))
-
-        eje = tk.StringVar(value=valores[0])
-
-        ttk.Entry(
-            ventana,
-            textvariable=eje
-        ).pack(fill="x", padx=15)
-
-        ttk.Label(
-            ventana,
-            text="Dirección"
-        ).pack(anchor="w", padx=15, pady=(10, 5))
-
-        direccion = tk.StringVar(value=valores[1])
-
-        ttk.Combobox(
-            ventana,
-            textvariable=direccion,
-            values=("negativo", "positivo", "gatillo"),
-            state="readonly"
-        ).pack(fill="x", padx=15)
-
-        ttk.Label(
-            ventana,
-            text="Acción"
-        ).pack(anchor="w", padx=15, pady=(10, 5))
-
-        accion = tk.StringVar(value=valores[2])
-
-        ttk.Entry(
-            ventana,
-            textvariable=accion
-        ).pack(fill="x", padx=15)
-
-        ttk.Label(
-            ventana,
-            text="Sensibilidad gatillo"
-        ).pack(anchor="w", padx=15, pady=(10, 5))
-
-        sensibilidad = tk.StringVar(
-            value=valores[3] if valores[3] != "-" else "0.2"
-        )
-
-        ttk.Entry(
-            ventana,
-            textvariable=sensibilidad
-        ).pack(fill="x", padx=15)
-
-        def aceptar():
-
-            try:
-                eje_num = int(eje.get())
-                sens = float(sensibilidad.get())
-
-                if eje_num < 0 or not 0 <= sens <= 1:
-                    raise ValueError
-
-            except ValueError:
-
-                messagebox.showerror(
-                    "Error",
-                    "Los valores ingresados no son válidos.",
-                    parent=ventana
-                )
-
-                return
-
-            self.tree.item(
-                item,
-                values=(
-                    eje_num,
-                    direccion.get(),
-                    accion.get(),
-                    sens
-                )
-            )
-
-            ventana.destroy()
-
-        ttk.Button(
-            ventana,
-            text="Aceptar",
-            command=aceptar
-        ).pack(pady=15)
-
+        self.abrir_editor(item)
 
     def eliminar(self):
-
         item = self.obtener_seleccion()
 
         if item is None:
             return
 
         confirmar = messagebox.askyesno(
-            "Eliminar",
+            "Eliminar regla",
             "¿Eliminar la regla seleccionada?"
         )
 
-        if confirmar:
-            self.tree.delete(item)
+        if not confirmar:
+            return
 
+        self.tree.delete(item)
 
     def guardar(self):
-
         reglas = []
 
         for item in self.tree.get_children():
-
             valores = self.tree.item(
                 item,
                 "values"
             )
 
+            try:
+                eje = int(valores[0])
+            except ValueError:
+                messagebox.showerror(
+                    "Error",
+                    "Existe un eje inválido."
+                )
+                return
+
             regla = {
-                "eje": int(valores[0]),
+                "eje": eje,
                 "direccion": valores[1],
                 "accion": valores[2]
             }
 
             if valores[1] == "gatillo":
+                try:
+                    sensibilidad = float(
+                        valores[3]
+                    )
+                except ValueError:
+                    messagebox.showerror(
+                        "Error",
+                        "La sensibilidad del gatillo no es válida."
+                    )
+                    return
 
-                regla["sensibilidad_gatillo"] = float(
-                    valores[3]
-                )
+                regla[
+                    "sensibilidad_gatillo"
+                ] = sensibilidad
 
             reglas.append(regla)
 
