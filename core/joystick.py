@@ -18,15 +18,30 @@ class Joystick:
         self.detectar()
 
     def detectar(self):
+        pygame.event.pump()
+
         if pygame.joystick.get_count() == 0:
             self.device = None
-
-            print("[-] No hay ningún mando conectado")
-
             return False
 
-        self.device = pygame.joystick.Joystick(0)
-        self.device.init()
+        if self.device is not None:
+            try:
+                if self.device.get_init():
+                    return True
+            except pygame.error:
+                self.device = None
+
+        try:
+            self.device = pygame.joystick.Joystick(0)
+            self.device.init()
+
+        except pygame.error as error:
+            print(
+                f"[-] Error detectando mando: {error}"
+            )
+
+            self.device = None
+            return False
 
         print(
             f"[+] Mando detectado: "
@@ -34,25 +49,67 @@ class Joystick:
         )
 
         print(
-            f"[+] Botones: {self.buttons_count()}"
+            f"[+] Botones: "
+            f"{self.device.get_numbuttons()}"
         )
 
         print(
-            f"[+] Ejes: {self.axes_count()}"
+            f"[+] Ejes: "
+            f"{self.device.get_numaxes()}"
         )
 
         print(
-            f"[+] HATs: {self.hats_count()}"
+            f"[+] HATs: "
+            f"{self.device.get_numhats()}"
         )
 
         return True
 
-    def conectado(self):
-        return (
-            self.device is not None
-            and self.device.get_init()
-        )
+    def verificar_conexion(self):
+        pygame.event.pump()
 
+        if pygame.joystick.get_count() == 0:
+
+            if self.device is not None:
+                print("[-] Mando desconectado")
+
+                try:
+                    self.device.quit()
+                except pygame.error:
+                    pass
+
+                self.device = None
+
+            return False
+
+        if self.device is None:
+            return self.detectar()
+
+        try:
+            if self.device.get_init():
+                return True
+
+        except pygame.error:
+            pass
+
+        self.device = None
+
+        return self.detectar()
+
+
+    def conectado(self):
+        if self.device is None:
+            return False
+
+        if pygame.joystick.get_count() == 0:
+            return False
+
+        try:
+            return self.device.get_init()
+
+        except pygame.error:
+            return False
+        
     def name(self):
         if not self.conectado():
             return "Sin mando conectado"
@@ -66,37 +123,55 @@ class Joystick:
         if not self.conectado():
             return 0.0
 
-        return self.device.get_axis(axis)
+        try:
+            return self.device.get_axis(axis)
+        except pygame.error:
+            return 0.0
 
     def axes_count(self):
         if not self.conectado():
             return 0
 
-        return self.device.get_numaxes()
+        try:
+            return self.device.get_numaxes()
+        except pygame.error:
+            return 0
 
     def get_button(self, button):
         if not self.conectado():
             return False
 
-        return self.device.get_button(button)
+        try:
+            return self.device.get_button(button)
+        except pygame.error:
+            return False
 
     def buttons_count(self):
         if not self.conectado():
             return 0
 
-        return self.device.get_numbuttons()
+        try:
+            return self.device.get_numbuttons()
+        except pygame.error:
+            return 0
 
     def get_hat(self, hat):
         if not self.conectado():
             return (0, 0)
 
-        return self.device.get_hat(hat)
+        try:
+            return self.device.get_hat(hat)
+        except pygame.error:
+            return (0, 0)
 
     def hats_count(self):
         if not self.conectado():
             return 0
 
-        return self.device.get_numhats()
+        try:
+            return self.device.get_numhats()
+        except pygame.error:
+            return 0
 
     def events(self):
         if not self.conectado():
@@ -106,6 +181,9 @@ class Joystick:
 
     def close(self):
         if self.device is not None:
-            self.device.quit()
+            try:
+                self.device.quit()
+            except pygame.error:
+                pass
 
         pygame.joystick.quit()

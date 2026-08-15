@@ -50,7 +50,61 @@ class App:
 
         self.aplicar_estilos()
         self.crear_interfaz()
+        self.estado_joystick_anterior = (
+            self.mapper.joystick.conectado()
+        )
 
+        self.root.after(
+            1000,
+            self.verificar_joystick
+        )
+
+    def verificar_joystick(self):
+        joystick = self.mapper.joystick
+
+        conectado = joystick.verificar_conexion()
+
+        if conectado != self.estado_joystick_anterior:
+
+            if conectado:
+                print(
+                    f"[+] Mando conectado: "
+                    f"{joystick.name()}"
+                )
+
+                self.status_indicator.itemconfig(
+                    self.dot,
+                    fill=self.COLORS["success"]
+                )
+
+                self.status_label.config(
+                    text=f"Mando conectado: {joystick.name()}",
+                    foreground=self.COLORS["success"]
+                )
+
+                self.tab_joystick.actualizar_dispositivo()
+
+            else:
+                self.mapper.stop()
+
+                self.status_indicator.itemconfig(
+                    self.dot,
+                    fill=self.COLORS["danger"]
+                )
+
+                self.status_label.config(
+                    text="Mando desconectado",
+                    foreground=self.COLORS["danger"]
+                )
+
+                self.tab_joystick.actualizar_dispositivo()
+
+            self.estado_joystick_anterior = conectado
+
+        self.root.after(
+            1000,
+            self.verificar_joystick
+        )
     def aplicar_estilos(self):
         style = ttk.Style()
 
@@ -642,6 +696,7 @@ class App:
             return
 
         if not self.mapper.joystick.conectado():
+
             messagebox.showwarning(
                 "Joystick Mapper",
                 "No hay ningún mando conectado."
@@ -661,7 +716,7 @@ class App:
             foreground=self.COLORS["success"]
         )
 
-        self.ciclo_mapper()
+        self.ciclo_mapper() 
         
     def ciclo_mapper(self):
         if not self.mapper.running:

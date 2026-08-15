@@ -1017,6 +1017,7 @@ class JoystickView(ttk.Frame):
             30,
             self.actualizar
         )
+
     def actualizar_color_control(
         self,
         nombre,
@@ -1548,3 +1549,22 @@ class JoystickView(ttk.Frame):
             },
             "dpad_botones": None
         }
+
+    def actualizar_dispositivo(self):
+        self.perfil = self.obtener_perfil_mando()
+
+        self.control_tipo = None
+        self.control_seleccionado = None
+
+        self.elemento_label.config(
+            text="Ninguno"
+        )
+
+        self.accion_label.config(
+            text="Sin asignar"
+        )
+
+        self.dibujar_gamepad()
+
+
+    
