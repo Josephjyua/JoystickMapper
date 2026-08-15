@@ -3,7 +3,6 @@ from core.joystick import BUTTON_DOWN, BUTTON_UP
 from core.input import Input
 from core.mouse import mover_mouse
 
-import time
 
 class Mapper:
 
@@ -27,23 +26,14 @@ class Mapper:
                 continue
 
             valor = self.joystick.get_axis(eje)
-
-            estado_anterior = self.estado_ejes.get(
-                idx,
-                False
-            )
-
+            estado_anterior = self.estado_ejes.get(idx, False)
             estado_actual = False
 
             if direccion == "negativo":
-                estado_actual = (
-                    valor < -self.deadzone
-                )
+                estado_actual = valor < -self.deadzone
 
             elif direccion == "positivo":
-                estado_actual = (
-                    valor > self.deadzone
-                )
+                estado_actual = valor > self.deadzone
 
             elif direccion == "gatillo":
                 sensibilidad_gatillo = regla.get(
@@ -51,16 +41,13 @@ class Mapper:
                     self.sensibilidad_gatillo
                 )
 
-                porcentaje = (
-                    valor + 1.0
-                ) / 2.0
+                porcentaje = (valor + 1.0) / 2.0
 
                 estado_actual = (
                     porcentaje >= sensibilidad_gatillo
                 )
 
             if estado_actual != estado_anterior:
-
                 if estado_actual:
                     self.input.press(accion)
                 else:
@@ -89,17 +76,8 @@ class Mapper:
         rx = self.joystick.get_axis(eje_x)
         ry = self.joystick.get_axis(eje_y)
 
-        dx = (
-            rx
-            if abs(rx) > self.deadzone
-            else 0
-        )
-
-        dy = (
-            ry
-            if abs(ry) > self.deadzone
-            else 0
-        )
+        dx = rx if abs(rx) > self.deadzone else 0
+        dy = ry if abs(ry) > self.deadzone else 0
 
         if dx != 0 or dy != 0:
             mover_mouse(
@@ -144,7 +122,6 @@ class Mapper:
             )
 
             if presionado != estado_anterior:
-
                 if presionado:
                     self.input.press(accion)
                 else:
@@ -156,7 +133,6 @@ class Mapper:
         for evento in self.joystick.events():
 
             if evento.type == BUTTON_DOWN:
-
                 boton = str(
                     evento.button
                 )
@@ -171,7 +147,6 @@ class Mapper:
                     )
 
             elif evento.type == BUTTON_UP:
-
                 boton = str(
                     evento.button
                 )
@@ -213,7 +188,6 @@ class Mapper:
             )
 
             if activo != estado_anterior:
-
                 if activo:
                     self.input.press(
                         accion
@@ -227,12 +201,39 @@ class Mapper:
                     direccion
                 ] = activo
 
+    def procesar(self):
+        if not self.running:
+            return
+
+        self.joystick.update()
+
+        self.procesar_ejes_teclas()
+        self.procesar_mouse()
+        self.procesar_botones()
+        self.procesar_hat()
+        self.procesar_gatillos()
+
+
+    def iniciar(self):
+        if self.running:
+            return False
+
+        if not self.joystick.conectado():
+            print(
+                "[-] No se puede iniciar: "
+                "no hay mando conectado"
+            )
+
+            return False
+
+        print("[+] Mapper iniciado")
+
+        self.running = True
+
+        return True
     def liberar_estado(self):
-
         for idx, activo in self.estado_ejes.items():
-
             if activo:
-
                 accion = self.ejes_teclas[
                     idx
                 ].get("accion")
@@ -243,23 +244,19 @@ class Mapper:
                     )
 
         for accion in self.botones.values():
-
             if accion:
                 self.input.release(
                     accion
                 )
 
         for accion in self.hats.values():
-
             if accion:
                 self.input.release(
                     accion
                 )
 
         for nombre, activo in self.estado_gatillos.items():
-
             if activo:
-
                 accion = self.mapeo_gatillos.get(
                     nombre
                 )
@@ -268,45 +265,6 @@ class Mapper:
                     self.input.release(
                         accion
                     )
-
-    def run(self):
-        print("[+] Mapper iniciado")
-
-        self.running = True
-
-        try:
-            while self.running:
-
-                self.joystick.update()
-
-                self.procesar_ejes_teclas()
-
-                self.procesar_mouse()
-
-                self.procesar_botones()
-
-                self.procesar_hat()
-
-                self.procesar_gatillos()
-
-                time.sleep(
-                    self.config.get(
-                        "polling_rate_ms",
-                        10
-                    ) / 1000
-                )
-
-        except KeyboardInterrupt:
-
-            print(
-                "\n[+] Cerrando mapper"
-            )
-
-        finally:
-
-            self.running = False
-
-            self.liberar_estado()
 
     def reload_config(self):
         self.config.reload()
@@ -374,4 +332,10 @@ class Mapper:
         }
 
     def stop(self):
+        if not self.running:
+            return
+
         self.running = False
+        self.liberar_estado()
+
+        print("[+] Mapper detenido")

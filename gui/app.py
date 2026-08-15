@@ -1,17 +1,14 @@
-
 import tkinter as tk
 from tkinter import ttk, messagebox
-import threading
 
 from gui.joystick_view import JoystickView
 from core.mapper import Mapper
 
 
 class App:
+
     def __init__(self, config):
         self.config = config
-        self.mapper = Mapper(self.config)
-        self.mapper_thread = None
 
         self.COLORS = {
             "bg": "#121214",
@@ -26,12 +23,29 @@ class App:
             "input_bg": "#202024"
         }
 
+        # Tkinter debe inicializarse antes que pygame/SDL en macOS
         self.root = tk.Tk()
-        self.root.title("Joystick Mapper - Professional Edition")
-        self.root.geometry("850x600")
-        self.root.minsize(700, 500)
+
+        self.root.title(
+            "Joystick Mapper - Professional Edition"
+        )
+
+        self.root.geometry(
+            "850x600"
+        )
+
+        self.root.minsize(
+            700,
+            500
+        )
+
         self.root.configure(
             bg=self.COLORS["bg"]
+        )
+
+        # Mapper después de Tk
+        self.mapper = Mapper(
+            self.config
         )
 
         self.aplicar_estilos()
@@ -39,7 +53,14 @@ class App:
 
     def aplicar_estilos(self):
         style = ttk.Style()
-        style.theme_use("clam")
+
+        style.theme_use(
+            "clam"
+        )
+
+        # --------------------------------------------------
+        # GLOBAL
+        # --------------------------------------------------
 
         style.configure(
             ".",
@@ -47,6 +68,10 @@ class App:
             foreground=self.COLORS["text"],
             font=("Segoe UI", 9)
         )
+
+        # --------------------------------------------------
+        # NOTEBOOK
+        # --------------------------------------------------
 
         style.configure(
             "TNotebook",
@@ -65,12 +90,22 @@ class App:
         style.map(
             "TNotebook.Tab",
             background=[
-                ("selected", self.COLORS["accent"])
+                (
+                    "selected",
+                    self.COLORS["accent"]
+                )
             ],
             foreground=[
-                ("selected", "white")
+                (
+                    "selected",
+                    "white"
+                )
             ]
         )
+
+        # --------------------------------------------------
+        # FRAMES
+        # --------------------------------------------------
 
         style.configure(
             "TFrame",
@@ -83,6 +118,10 @@ class App:
             relief="flat"
         )
 
+        # --------------------------------------------------
+        # LABELS
+        # --------------------------------------------------
+
         style.configure(
             "TLabel",
             background=self.COLORS["card_bg"],
@@ -91,18 +130,150 @@ class App:
 
         style.configure(
             "Header.TLabel",
-            font=("Segoe UI", 11, "bold"),
-            foreground=self.COLORS["accent"]
+            background=self.COLORS["card_bg"],
+            foreground=self.COLORS["accent"],
+            font=("Segoe UI", 11, "bold")
         )
 
         style.configure(
             "Status.TLabel",
+            background=self.COLORS["card_bg"],
+            foreground=self.COLORS["text"],
             font=("Segoe UI", 9, "bold")
         )
+
+        # --------------------------------------------------
+        # SEPARATORS
+        # --------------------------------------------------
 
         style.configure(
             "TSeparator",
             background=self.COLORS["card_border"]
+        )
+
+        # --------------------------------------------------
+        # BOTÓN PRINCIPAL
+        # --------------------------------------------------
+
+        style.configure(
+            "Primary.TButton",
+            background=self.COLORS["accent"],
+            foreground="white",
+            borderwidth=0,
+            focusthickness=0,
+            focuscolor="",
+            padding=(12, 7),
+            font=("Segoe UI", 9, "bold")
+        )
+
+        style.map(
+            "Primary.TButton",
+            background=[
+                (
+                    "active",
+                    self.COLORS["accent_hover"]
+                ),
+                (
+                    "pressed",
+                    self.COLORS["accent_hover"]
+                ),
+                (
+                    "disabled",
+                    self.COLORS["card_border"]
+                )
+            ],
+            foreground=[
+                (
+                    "active",
+                    "white"
+                ),
+                (
+                    "pressed",
+                    "white"
+                ),
+                (
+                    "disabled",
+                    self.COLORS["text_dim"]
+                )
+            ]
+        )
+
+        # --------------------------------------------------
+        # BOTÓN SECUNDARIO
+        # --------------------------------------------------
+
+        style.configure(
+            "Secondary.TButton",
+            background=self.COLORS["card_border"],
+            foreground=self.COLORS["text"],
+            borderwidth=0,
+            focusthickness=0,
+            focuscolor="",
+            padding=(12, 7),
+            font=("Segoe UI", 9)
+        )
+
+        style.map(
+            "Secondary.TButton",
+            background=[
+                (
+                    "active",
+                    self.COLORS["input_bg"]
+                ),
+                (
+                    "pressed",
+                    self.COLORS["input_bg"]
+                )
+            ],
+            foreground=[
+                (
+                    "active",
+                    "white"
+                ),
+                (
+                    "pressed",
+                    "white"
+                )
+            ]
+        )
+
+        # --------------------------------------------------
+        # BOTÓN DANGER
+        # --------------------------------------------------
+
+        style.configure(
+            "Danger.TButton",
+            background=self.COLORS["danger"],
+            foreground="white",
+            borderwidth=0,
+            focusthickness=0,
+            focuscolor="",
+            padding=(12, 7),
+            font=("Segoe UI", 9)
+        )
+
+        style.map(
+            "Danger.TButton",
+            background=[
+                (
+                    "active",
+                    "#ff6b6b"
+                ),
+                (
+                    "pressed",
+                    "#e54848"
+                )
+            ],
+            foreground=[
+                (
+                    "active",
+                    "white"
+                ),
+                (
+                    "pressed",
+                    "white"
+                )
+            ]
         )
 
     def crear_interfaz(self):
@@ -117,7 +288,9 @@ class App:
             side="top"
         )
 
-        header_frame.pack_propagate(False)
+        header_frame.pack_propagate(
+            False
+        )
 
         title_label = tk.Label(
             header_frame,
@@ -149,12 +322,6 @@ class App:
             notebook
         )
 
-        # self.tab_mapeo = AxesView(
-        #     notebook,
-        #     self.config,
-        #     self.mapper
-        # )
-
         self.tab_joystick = JoystickView(
             notebook,
             self.mapper
@@ -164,11 +331,6 @@ class App:
             self.tab_general,
             text=" General "
         )
-
-        # notebook.add(
-        #     self.tab_mapeo,
-        #     text=" Mapeo Ejes "
-        # )
 
         notebook.add(
             self.tab_joystick,
@@ -203,6 +365,10 @@ class App:
             sticky="w",
             pady=(0, 15)
         )
+
+        # --------------------------------------------------
+        # SENSIBILIDAD
+        # --------------------------------------------------
 
         ttk.Label(
             card,
@@ -245,6 +411,10 @@ class App:
             pady=5
         )
 
+        # --------------------------------------------------
+        # DEADZONE
+        # --------------------------------------------------
+
         ttk.Label(
             card,
             text="Zona Muerta (Deadzone):"
@@ -286,6 +456,10 @@ class App:
             pady=5
         )
 
+        # --------------------------------------------------
+        # POLLING
+        # --------------------------------------------------
+
         ttk.Label(
             card,
             text="Polling Rate (ms):"
@@ -298,7 +472,7 @@ class App:
 
         val_poll = self.config.get(
             "polling_rate_ms",
-            10
+            5
         )
 
         self.polling_var = tk.StringVar(
@@ -330,17 +504,14 @@ class App:
             weight=1
         )
 
-        btn_guardar = tk.Button(
+        # --------------------------------------------------
+        # GUARDAR
+        # --------------------------------------------------
+
+        btn_guardar = ttk.Button(
             card,
             text="Guardar Cambios Generales",
-            font=("Segoe UI", 9, "bold"),
-            bg=self.COLORS["accent"],
-            fg="white",
-            activebackground=self.COLORS["accent_hover"],
-            activeforeground="white",
-            bd=0,
-            cursor="hand2",
-            pady=6,
+            style="Primary.TButton",
             command=self.guardar
         )
 
@@ -397,18 +568,14 @@ class App:
             padx=5
         )
 
-        self.btn_detener = tk.Button(
+        # --------------------------------------------------
+        # DETENER
+        # --------------------------------------------------
+
+        self.btn_detener = ttk.Button(
             footer,
             text="Detener Motor",
-            font=("Segoe UI", 9),
-            bg="#2c2c31",
-            fg=self.COLORS["text"],
-            activebackground=self.COLORS["card_border"],
-            activeforeground="white",
-            bd=0,
-            cursor="hand2",
-            padx=12,
-            pady=4,
+            style="Secondary.TButton",
             command=self.detener_mapper
         )
 
@@ -417,18 +584,14 @@ class App:
             padx=5
         )
 
-        self.btn_iniciar = tk.Button(
+        # --------------------------------------------------
+        # INICIAR
+        # --------------------------------------------------
+
+        self.btn_iniciar = ttk.Button(
             footer,
             text="Iniciar Motor Mapper",
-            font=("Segoe UI", 9, "bold"),
-            bg=self.COLORS["accent"],
-            fg="white",
-            activebackground=self.COLORS["accent_hover"],
-            activeforeground="white",
-            bd=0,
-            cursor="hand2",
-            padx=12,
-            pady=4,
+            style="Primary.TButton",
             command=self.iniciar_mapper
         )
 
@@ -461,7 +624,6 @@ class App:
             )
 
             self.config.guardar()
-
             self.mapper.reload_config()
 
             messagebox.showinfo(
@@ -479,12 +641,15 @@ class App:
         if self.mapper.running:
             return
 
-        self.mapper_thread = threading.Thread(
-            target=self.mapper.run,
-            daemon=True
-        )
+        if not self.mapper.joystick.conectado():
+            messagebox.showwarning(
+                "Joystick Mapper",
+                "No hay ningún mando conectado."
+            )
 
-        self.mapper_thread.start()
+            return
+
+        self.mapper.iniciar()
 
         self.status_indicator.itemconfig(
             self.dot,
@@ -494,6 +659,22 @@ class App:
         self.status_label.config(
             text="Motor Ejecutándose",
             foreground=self.COLORS["success"]
+        )
+
+        self.ciclo_mapper()
+        
+    def ciclo_mapper(self):
+        if not self.mapper.running:
+            return
+
+        self.mapper.procesar()
+
+        self.root.after(
+            self.config.get(
+                "polling_rate_ms",
+                5
+            ),
+            self.ciclo_mapper
         )
 
     def detener_mapper(self):
@@ -511,4 +692,3 @@ class App:
 
     def run(self):
         self.root.mainloop()
-

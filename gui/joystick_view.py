@@ -11,7 +11,7 @@ class JoystickView(ttk.Frame):
         self.mapper = mapper
         self.joystick = mapper.joystick
         self.config = mapper.config
-
+        self.perfil = self.obtener_perfil_mando()   
         self.control_tipo = None
         self.control_seleccionado = None
         self.capturando_tecla = False
@@ -83,6 +83,10 @@ class JoystickView(ttk.Frame):
             pady=10
         )
 
+        # ------------------------------------------------------
+        # TÍTULO
+        # ------------------------------------------------------
+
         tk.Label(
             editor,
             text="CONFIGURACIÓN",
@@ -95,9 +99,13 @@ class JoystickView(ttk.Frame):
             pady=(15, 5)
         )
 
+        # ------------------------------------------------------
+        # NOMBRE DEL JOYSTICK
+        # ------------------------------------------------------
+
         tk.Label(
             editor,
-            text=self.joystick.device.get_name(),
+            text=self.joystick.name(),
             font=("Segoe UI", 9),
             bg=self.COLORS["body"],
             fg=self.COLORS["text_dim"],
@@ -108,6 +116,10 @@ class JoystickView(ttk.Frame):
             padx=15,
             pady=(0, 15)
         )
+
+        # ------------------------------------------------------
+        # CARD DE CONTROL
+        # ------------------------------------------------------
 
         card = tk.Frame(
             editor,
@@ -128,7 +140,9 @@ class JoystickView(ttk.Frame):
             font=("Segoe UI", 8),
             bg=self.COLORS["bg"],
             fg=self.COLORS["text_dim"]
-        ).pack(anchor="w")
+        ).pack(
+            anchor="w"
+        )
 
         self.elemento_label = tk.Label(
             card,
@@ -149,7 +163,9 @@ class JoystickView(ttk.Frame):
             font=("Segoe UI", 8),
             bg=self.COLORS["bg"],
             fg=self.COLORS["text_dim"]
-        ).pack(anchor="w")
+        ).pack(
+            anchor="w"
+        )
 
         self.accion_label = tk.Label(
             card,
@@ -164,17 +180,14 @@ class JoystickView(ttk.Frame):
             pady=(2, 0)
         )
 
-        self.capturar_button = tk.Button(
+        # ------------------------------------------------------
+        # CAPTURAR ENTRADA
+        # ------------------------------------------------------
+
+        self.capturar_button = ttk.Button(
             editor,
             text="Capturar Entrada",
-            font=("Segoe UI", 9, "bold"),
-            bg=self.COLORS["accent"],
-            fg="white",
-            activebackground="#996dff",
-            activeforeground="white",
-            bd=0,
-            cursor="hand2",
-            pady=8,
+            style="Primary.TButton",
             command=self.iniciar_captura_tecla
         )
 
@@ -184,17 +197,14 @@ class JoystickView(ttk.Frame):
             pady=(20, 5)
         )
 
-        self.guardar_button = tk.Button(
+        # ------------------------------------------------------
+        # GUARDAR ASIGNACIÓN
+        # ------------------------------------------------------
+
+        self.guardar_button = ttk.Button(
             editor,
             text="Guardar Asignación",
-            font=("Segoe UI", 9),
-            bg=self.COLORS["btn_normal"],
-            fg=self.COLORS["text"],
-            activebackground=self.COLORS["btn_hover"],
-            activeforeground="white",
-            bd=0,
-            cursor="hand2",
-            pady=8,
+            style="Secondary.TButton",
             command=self.guardar_asignacion
         )
 
@@ -243,7 +253,6 @@ class JoystickView(ttk.Frame):
             padx=15,
             pady=2
         )
-
         
     # ==========================================================
     # DIBUJAR GAMEPAD
@@ -310,7 +319,7 @@ class JoystickView(ttk.Frame):
 
         lt = canvas.create_rectangle(
             cx - 150 * s,
-            cy - 130* s,
+            cy - 130 * s,
             cx - 80 * s,
             cy - 110 * s,
             fill=self.COLORS["btn_normal"],
@@ -335,7 +344,7 @@ class JoystickView(ttk.Frame):
 
         rt = canvas.create_rectangle(
             cx + 80 * s,
-            cy - 130* s,
+            cy - 130 * s,
             cx + 150 * s,
             cy - 110 * s,
             fill=self.COLORS["btn_normal"],
@@ -486,7 +495,6 @@ class JoystickView(ttk.Frame):
         }
 
         for direccion, coords in pos_hats.items():
-
             item = canvas.create_rectangle(
                 *coords,
                 fill=self.COLORS["btn_normal"],
@@ -505,45 +513,100 @@ class JoystickView(ttk.Frame):
             )
 
         # ------------------------------------------------------
-        # BOTONES ABXY
+        # BOTONES PRINCIPALES ABXY
         # ------------------------------------------------------
 
         btn_center_x = cx + 110 * s
         btn_center_y = cy - 20 * s
-
         offset = 22 * s
 
-        layout = {
-            0: (
-                btn_center_x,
-                btn_center_y + offset,
-                "A"
-            ),
-            1: (
-                btn_center_x + offset,
-                btn_center_y,
-                "B"
-            ),
-            2: (
-                btn_center_x - offset,
-                btn_center_y,
-                "X"
-            ),
-            3: (
-                btn_center_x,
-                btn_center_y - offset,
-                "Y"
-            )
-        }
+        if self.perfil["tipo"] == "nintendo":
+            # Nintendo Switch Pro:
+            #
+            #       X
+            #    Y     A
+            #       B
+            #
+            # pygame:
+            # 0 = B
+            # 1 = A
+            # 2 = Y
+            # 3 = X
+
+            layout = {
+                1: (
+                    btn_center_x,
+                    btn_center_y + offset,
+                    "B"
+                ),
+                0: (
+                    btn_center_x + offset,
+                    btn_center_y,
+                    "A"
+                ),
+                3: (
+                    btn_center_x - offset,
+                    btn_center_y,
+                    "Y"
+                ),
+                2: (
+                    btn_center_x,
+                    btn_center_y - offset,
+                    "X"
+                )
+            }
+
+        else:
+            # Xbox / layout genérico:
+            #
+            #       Y
+            #    X     B
+            #       A
+
+            layout = {
+                0: (
+                    btn_center_x,
+                    btn_center_y + offset,
+                    "A"
+                ),
+                1: (
+                    btn_center_x + offset,
+                    btn_center_y,
+                    "B"
+                ),
+                2: (
+                    btn_center_x - offset,
+                    btn_center_y,
+                    "X"
+                ),
+                3: (
+                    btn_center_x,
+                    btn_center_y - offset,
+                    "Y"
+                )
+            }
 
         r_btn = 11 * s
+
+        # ------------------------------------------------------
+        # RESTO DE BOTONES
+        # ------------------------------------------------------
 
         for i in range(
             self.joystick.buttons_count()
         ):
 
+            # Switch Pro utiliza 11-14 para el D-Pad.
+            # Ya se representan mediante la cruceta.
+            if (
+                self.perfil["tipo"] == "nintendo"
+                and i in (11, 12, 13, 14)
+            ):
+                continue
+
             if i in layout:
                 bx, by, lbl = layout[i]
+
             else:
                 extra_idx = i - 4
 
@@ -707,6 +770,10 @@ class JoystickView(ttk.Frame):
     # ==========================================================
 
     def actualizar(self):
+
+        if not self.mapper.running:
+            self.joystick.update()
+
         canvas = self.panel_mando
 
         w = canvas.winfo_width()
@@ -832,6 +899,14 @@ class JoystickView(ttk.Frame):
                 self.joystick.buttons_count()
             ):
 
+                # En Nintendo, 11-14 son el D-Pad.
+                # No se muestran como botones adicionales.
+                if (
+                    self.perfil["tipo"] == "nintendo"
+                    and i in (11, 12, 13, 14)
+                ):
+                    continue
+
                 tag = self.elementos_canvas.get(
                     f"btn_{i}"
                 )
@@ -870,7 +945,30 @@ class JoystickView(ttk.Frame):
             # D-PAD
             # --------------------------------------------------
 
-            if self.joystick.hats_count() > 0:
+            estados = {
+                "up": False,
+                "down": False,
+                "left": False,
+                "right": False
+            }
+
+            if self.perfil["tipo"] == "nintendo":
+
+                dpad = self.perfil[
+                    "dpad_botones"
+                ]
+
+                for direccion, indice in dpad.items():
+
+                    if indice < self.joystick.buttons_count():
+
+                        estados[direccion] = bool(
+                            self.joystick.get_button(
+                                indice
+                            )
+                        )
+
+            elif self.joystick.hats_count() > 0:
 
                 hx, hy = self.joystick.get_hat(0)
 
@@ -881,45 +979,44 @@ class JoystickView(ttk.Frame):
                     "right": hx > 0
                 }
 
-                for direccion, activo in estados.items():
+            for direccion, activo in estados.items():
 
-                    tag = self.elementos_canvas.get(
-                        f"hat_{direccion}"
+                tag = self.elementos_canvas.get(
+                    f"hat_{direccion}"
+                )
+
+                if not tag:
+                    continue
+
+                if activo:
+
+                    canvas.itemconfig(
+                        tag,
+                        fill=self.COLORS["btn_active"]
                     )
 
-                    if not tag:
-                        continue
+                elif (
+                    self.control_tipo == "hat"
+                    and direccion
+                    == self.control_seleccionado
+                ):
 
-                    if activo:
+                    canvas.itemconfig(
+                        tag,
+                        fill=self.COLORS["btn_selected"]
+                    )
 
-                        canvas.itemconfig(
-                            tag,
-                            fill=self.COLORS["btn_active"]
-                        )
+                else:
 
-                    elif (
-                        self.control_tipo == "hat"
-                        and direccion
-                        == self.control_seleccionado
-                    ):
-
-                        canvas.itemconfig(
-                            tag,
-                            fill=self.COLORS["btn_selected"]
-                        )
-
-                    else:
-
-                        canvas.itemconfig(
-                            tag,
-                            fill=self.COLORS["btn_normal"]
-                        )
+                    canvas.itemconfig(
+                        tag,
+                        fill=self.COLORS["btn_normal"]
+                    )
 
         self.after(
             30,
             self.actualizar
         )
-
     def actualizar_color_control(
         self,
         nombre,
@@ -1421,3 +1518,33 @@ class JoystickView(ttk.Frame):
 
         self.mapper.reload_config()
 
+    def obtener_perfil_mando(self):
+        nombre = self.joystick.name().lower()
+
+        if "nintendo switch pro" in nombre:
+            return {
+                "tipo": "nintendo",
+                "botones_principales": {
+                    0: "B",
+                    1: "A",
+                    2: "Y",
+                    3: "X"
+                },
+                "dpad_botones": {
+                    "up": 11,
+                    "down": 12,
+                    "left": 13,
+                    "right": 14
+                }
+            }
+
+        return {
+            "tipo": "generico",
+            "botones_principales": {
+                0: "A",
+                1: "B",
+                2: "X",
+                3: "Y"
+            },
+            "dpad_botones": None
+        }

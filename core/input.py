@@ -1,6 +1,7 @@
 from pynput.keyboard import Key, Controller as KeyboardController
 from pynput.mouse import Button, Controller as MouseController
 
+
 class Input:
 
     def __init__(self):
@@ -14,7 +15,6 @@ class Input:
             "tab": Key.tab,
             "backspace": Key.backspace,
             "delete": Key.delete,
-            "insert": Key.insert,
 
             "shift": Key.shift,
             "ctrl": Key.ctrl,
@@ -34,22 +34,48 @@ class Input:
             "pageup": Key.page_up,
             "pagedown": Key.page_down,
 
-            "caps_lock": Key.caps_lock,
-            "num_lock": Key.num_lock,
-            "scroll_lock": Key.scroll_lock,
-
-            "print_screen": Key.print_screen,
-            "pause": Key.pause,
-            "menu": Key.menu
+            "caps_lock": Key.caps_lock
         }
+
+        teclas_opcionales = {
+            "insert": "insert",
+            "num_lock": "num_lock",
+            "scroll_lock": "scroll_lock",
+            "print_screen": "print_screen",
+            "pause": "pause",
+            "menu": "menu"
+        }
+
+        for nombre, atributo in teclas_opcionales.items():
+            tecla = getattr(
+                Key,
+                atributo,
+                None
+            )
+
+            if tecla is not None:
+                self.special_keys[nombre] = tecla
 
         self.mouse_buttons = {
             "mouse_left": Button.left,
             "mouse_right": Button.right,
-            "mouse_middle": Button.middle,
-            "mouse_x1": Button.x1,
-            "mouse_x2": Button.x2
+            "mouse_middle": Button.middle
         }
+
+        botones_mouse_opcionales = {
+            "mouse_x1": "x1",
+            "mouse_x2": "x2"
+        }
+
+        for nombre, atributo in botones_mouse_opcionales.items():
+            boton = getattr(
+                Button,
+                atributo,
+                None
+            )
+
+            if boton is not None:
+                self.mouse_buttons[nombre] = boton
 
     def obtener_tecla(self, accion):
         return self.special_keys.get(
