@@ -55,6 +55,7 @@ class App:
 
         self.aplicar_estilos()
         self.crear_interfaz()
+        self.cargar_ultimo_perfil()
         self.root.protocol(
             "WM_DELETE_WINDOW",
             self.cerrar_app
@@ -433,6 +434,16 @@ class App:
             text="Guardar",
             style="Primary.TButton",
             command=self.guardar_perfil
+        ).pack(
+            side="left",
+            padx=3
+        )
+
+        ttk.Button(
+            perfil_frame,
+            text="Eliminar",
+            style="Danger.TButton",
+            command=self.eliminar_perfil
         ).pack(
             side="left",
             padx=3
@@ -937,8 +948,6 @@ class App:
             )
             return
 
-        # Primero aseguramos que los valores del
-        # panel General estén en config.
         try:
             self.config.set(
                 "sensibilidad_mouse",
@@ -981,6 +990,80 @@ class App:
             f"Perfil '{nombre}' guardado correctamente."
         )
 
+    def eliminar_perfil(self):
+        nombre = self.perfil_var.get().strip()
+
+        if not nombre:
+            messagebox.showwarning(
+                "Joystick Mapper",
+                "Selecciona un perfil para eliminar."
+            )
+            return
+
+        confirmar = messagebox.askyesno(
+            "Eliminar perfil",
+            f"¿Eliminar el perfil '{nombre}'?\n\n"
+            "Esta acción no se puede deshacer."
+        )
+
+        if not confirmar:
+            return
+
+        eliminado = self.profile_manager.eliminar(nombre)
+
+        if not eliminado:
+            messagebox.showerror(
+                "Joystick Mapper",
+                "No se pudo eliminar el perfil."
+            )
+            return
+
+        self.perfil_var.set("")
+        self.actualizar_lista_perfiles()
+        self.mapper.reload_config()
+
+        self.sensibilidad_var.set(
+            float(
+                self.config.get(
+                    "sensibilidad_mouse",
+                    15.0
+                )
+            )
+        )
+
+        self.deadzone_var.set(
+            float(
+                self.config.get(
+                    "deadzone",
+                    0.15
+                )
+            )
+        )
+
+        self.polling_var.set(
+            str(
+                self.config.get(
+                    "polling_rate_ms",
+                    5
+                )
+            )
+        )
+
+        self.tab_joystick.actualizar_dispositivo()
+        ultimo_perfil = (
+            self.config.obtener_ultimo_perfil()
+        )
+
+        if ultimo_perfil == nombre:
+            self.config.guardar_ultimo_perfil(
+                None
+            )
+
+        messagebox.showinfo(
+            "Joystick Mapper",
+            f"Perfil '{nombre}' eliminado."
+        )
+
     def cambiar_perfil(self, event=None):
         nuevo_perfil = self.perfil_var.get()
 
@@ -991,8 +1074,6 @@ class App:
             self.profile_manager.perfil_actual
         )
 
-        # Guardar automáticamente el perfil
-        # que estamos abandonando
         if (
             perfil_actual
             and perfil_actual != nuevo_perfil
@@ -1015,15 +1096,12 @@ class App:
                 )
                 return
 
-        # Si el mapper está funcionando,
-        # detenerlo antes de cambiar configuración
         if self.mapper.running:
             self.detener_mapper()
 
         try:
-            self.profile_manager.cargar(
-                nuevo_perfil
-            )
+            self.profile_manager.cargar(nuevo_perfil)
+            self.config.guardar_ultimo_perfil(nuevo_perfil)
 
         except FileNotFoundError:
             messagebox.showerror(
@@ -1042,7 +1120,6 @@ class App:
 
         self.mapper.reload_config()
 
-        # Actualizar interfaz General
         self.sensibilidad_var.set(
             float(
                 self.config.get(
@@ -1162,3 +1239,67 @@ class App:
         self.mapper.stop()
 
         self.root.destroy()
+
+    def cargar_ultimo_perfil(self):
+        ultimo_perfil = (
+            self.config.obtener_ultimo_perfil()
+        )
+
+        if not ultimo_perfil:
+            return
+
+        if not self.profile_manager.existe(
+            ultimo_perfil
+        ):
+            return
+
+        try:
+            self.profile_manager.cargar(
+                ultimo_perfil
+            )
+
+            self.perfil_var.set(
+                ultimo_perfil
+            )
+
+            self.mapper.reload_config()
+
+            self.sensibilidad_var.set(
+                float(
+                    self.config.get(
+                        "sensibilidad_mouse",
+                        15.0
+                    )
+                )
+            )
+
+            self.deadzone_var.set(
+                float(
+                    self.config.get(
+                        "deadzone",
+                        0.15
+                    )
+                )
+            )
+
+            self.polling_var.set(
+                str(
+                    self.config.get(
+                        "polling_rate_ms",
+                        5
+                    )
+                )
+            )
+
+            self.tab_joystick.actualizar_dispositivo()
+
+            print(
+                f"[+] Perfil cargado automáticamente: "
+                f"{ultimo_perfil}"
+            )
+
+        except Exception as error:
+            print(
+                f"[-] No se pudo cargar "
+                f"el último perfil: {error}"
+            )

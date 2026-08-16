@@ -106,6 +106,36 @@ class Config:
     def reload(self):
         self.data = self.cargar()
 
+    def obtener_ultimo_perfil(self):
+        config_global = self.cargar_archivo(
+            self.path
+        )
+
+        return config_global.get(
+            "ultimo_perfil"
+        )
+
+    def guardar_ultimo_perfil(self, nombre):
+        config_global = self.cargar_archivo(
+            self.path
+        )
+
+        config_global[
+            "ultimo_perfil"
+        ] = nombre
+
+        with open(
+            self.path,
+            "w",
+            encoding="utf-8"
+        ) as archivo:
+            json.dump(
+                config_global,
+                archivo,
+                indent=4,
+                ensure_ascii=False
+            )
+
     def get(self, key, default=None):
         return self.data.get(
             key,

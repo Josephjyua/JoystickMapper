@@ -50,5 +50,6 @@
     "mapeo_gatillos": {
         "lt": "space",
         "rt": "mouse_right"
-    }
+    },
+    "ultimo_perfil": "Panchita"
 }

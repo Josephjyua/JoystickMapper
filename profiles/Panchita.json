@@ -1,0 +1,8 @@
+{
+    "sensibilidad_mouse": 6.5,
+    "deadzone": 0.09,
+    "polling_rate_ms": 5,
+    "mapeo_gatillos": {
+        "rt": "space"
+    }
+}
