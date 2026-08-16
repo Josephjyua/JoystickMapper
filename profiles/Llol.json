@@ -1,0 +1,11 @@
+{
+    "sensibilidad_mouse": 7.0,
+    "deadzone": 0.07,
+    "polling_rate_ms": 5,
+    "mapeo_botones": {
+        "10": "mouse_left"
+    },
+    "mapeo_gatillos": {
+        "rt": "mouse_right"
+    }
+}

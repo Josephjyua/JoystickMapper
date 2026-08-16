@@ -1,0 +1,75 @@
+{
+    "nombre": "default",
+    "configuracion": {
+        "nombre": "default",
+        "configuracion": {
+            "nombre": "default",
+            "configuracion": {
+                "nombre": "default",
+                "configuracion": {
+                    "sensibilidad_mouse": 4.5,
+                    "deadzone": 0.05,
+                    "polling_rate_ms": 5,
+                    "ejes_config": {
+                        "rs_horizontal": 2,
+                        "rs_vertical": 3,
+                        "mouse_enabled": false
+                    },
+                    "mapeo_ejes_a_teclas": [
+                        {
+                            "eje": 0,
+                            "direccion": "negativo",
+                            "accion": "a"
+                        },
+                        {
+                            "eje": 0,
+                            "direccion": "positivo",
+                            "accion": "d"
+                        },
+                        {
+                            "eje": 1,
+                            "direccion": "negativo",
+                            "accion": "w"
+                        },
+                        {
+                            "eje": 1,
+                            "direccion": "positivo",
+                            "accion": "s"
+                        }
+                    ],
+                    "mapeo_botones": {
+                        "0": "r",
+                        "1": "c",
+                        "2": "e",
+                        "3": "p",
+                        "4": "shift",
+                        "5": "mouse_left",
+                        "6": "n",
+                        "8": "mouse_middle",
+                        "11": "v",
+                        "10": "mouse_left"
+                    },
+                    "mapeo_hat": {
+                        "right": "right",
+                        "up": "up",
+                        "down": "down",
+                        "left": "left"
+                    },
+                    "mapeo_gatillos": {
+                        "lt": "space",
+                        "rt": "mouse_right"
+                    }
+                }
+            },
+            "sensibilidad_mouse": 15.0,
+            "deadzone": 0.03,
+            "polling_rate_ms": 5
+        }
+    },
+    "sensibilidad_mouse": 6.5,
+    "deadzone": 0.05,
+    "polling_rate_ms": 5,
+    "mapeo_gatillos": {
+        "rt": "space"
+    }
+}

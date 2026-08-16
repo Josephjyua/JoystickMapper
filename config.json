@@ -1,6 +1,6 @@
 {
     "sensibilidad_mouse": 4.5,
-    "deadzone": 0.05,
+    "deadzone": 0.07,
     "polling_rate_ms": 5,
     "ejes_config": {
         "rs_horizontal": 2,
@@ -30,10 +30,10 @@
         }
     ],
     "mapeo_botones": {
-        "0": "space",
+        "0": "r",
         "1": "c",
         "2": "e",
-        "3": "p",
+        "3": "q",
         "4": "shift",
         "5": "mouse_left",
         "6": "n",

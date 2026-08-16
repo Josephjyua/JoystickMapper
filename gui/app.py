@@ -3,6 +3,7 @@ from tkinter import ttk, messagebox
 
 from gui.joystick_view import JoystickView
 from core.mapper import Mapper
+from core.profile_manager import ProfileManager
 
 
 class App:
@@ -23,7 +24,8 @@ class App:
             "input_bg": "#202024"
         }
 
-        # Tkinter debe inicializarse antes que pygame/SDL en macOS
+        # IMPORTANTE EN macOS:
+        # Tkinter debe iniciarse antes que pygame/SDL.
         self.root = tk.Tk()
 
         self.root.title(
@@ -43,13 +45,21 @@ class App:
             bg=self.COLORS["bg"]
         )
 
-        # Mapper después de Tk
         self.mapper = Mapper(
+            self.config
+        )
+
+        self.profile_manager = ProfileManager(
             self.config
         )
 
         self.aplicar_estilos()
         self.crear_interfaz()
+        self.root.protocol(
+            "WM_DELETE_WINDOW",
+            self.cerrar_app
+        )
+
         self.estado_joystick_anterior = (
             self.mapper.joystick.conectado()
         )
@@ -59,14 +69,24 @@ class App:
             self.verificar_joystick
         )
 
+    # ==========================================================
+    # JOYSTICK / RECONEXIÓN
+    # ==========================================================
+
     def verificar_joystick(self):
         joystick = self.mapper.joystick
 
-        conectado = joystick.verificar_conexion()
+        conectado = (
+            joystick.verificar_conexion()
+        )
 
-        if conectado != self.estado_joystick_anterior:
+        if (
+            conectado
+            != self.estado_joystick_anterior
+        ):
 
             if conectado:
+
                 print(
                     f"[+] Mando conectado: "
                     f"{joystick.name()}"
@@ -78,13 +98,17 @@ class App:
                 )
 
                 self.status_label.config(
-                    text=f"Mando conectado: {joystick.name()}",
+                    text=(
+                        f"Mando conectado: "
+                        f"{joystick.name()}"
+                    ),
                     foreground=self.COLORS["success"]
                 )
 
                 self.tab_joystick.actualizar_dispositivo()
 
             else:
+
                 self.mapper.stop()
 
                 self.status_indicator.itemconfig(
@@ -99,12 +123,19 @@ class App:
 
                 self.tab_joystick.actualizar_dispositivo()
 
-            self.estado_joystick_anterior = conectado
+            self.estado_joystick_anterior = (
+                conectado
+            )
 
         self.root.after(
             1000,
             self.verificar_joystick
         )
+
+    # ==========================================================
+    # ESTILOS
+    # ==========================================================
+
     def aplicar_estilos(self):
         style = ttk.Style()
 
@@ -112,20 +143,12 @@ class App:
             "clam"
         )
 
-        # --------------------------------------------------
-        # GLOBAL
-        # --------------------------------------------------
-
         style.configure(
             ".",
             background=self.COLORS["bg"],
             foreground=self.COLORS["text"],
             font=("Segoe UI", 9)
         )
-
-        # --------------------------------------------------
-        # NOTEBOOK
-        # --------------------------------------------------
 
         style.configure(
             "TNotebook",
@@ -157,10 +180,6 @@ class App:
             ]
         )
 
-        # --------------------------------------------------
-        # FRAMES
-        # --------------------------------------------------
-
         style.configure(
             "TFrame",
             background=self.COLORS["bg"]
@@ -171,10 +190,6 @@ class App:
             background=self.COLORS["card_bg"],
             relief="flat"
         )
-
-        # --------------------------------------------------
-        # LABELS
-        # --------------------------------------------------
 
         style.configure(
             "TLabel",
@@ -196,18 +211,14 @@ class App:
             font=("Segoe UI", 9, "bold")
         )
 
-        # --------------------------------------------------
-        # SEPARATORS
-        # --------------------------------------------------
-
         style.configure(
             "TSeparator",
             background=self.COLORS["card_border"]
         )
 
-        # --------------------------------------------------
-        # BOTÓN PRINCIPAL
-        # --------------------------------------------------
+        # ------------------------------------------------------
+        # PRIMARY BUTTON
+        # ------------------------------------------------------
 
         style.configure(
             "Primary.TButton",
@@ -252,9 +263,9 @@ class App:
             ]
         )
 
-        # --------------------------------------------------
-        # BOTÓN SECUNDARIO
-        # --------------------------------------------------
+        # ------------------------------------------------------
+        # SECONDARY BUTTON
+        # ------------------------------------------------------
 
         style.configure(
             "Secondary.TButton",
@@ -291,9 +302,9 @@ class App:
             ]
         )
 
-        # --------------------------------------------------
-        # BOTÓN DANGER
-        # --------------------------------------------------
+        # ------------------------------------------------------
+        # DANGER BUTTON
+        # ------------------------------------------------------
 
         style.configure(
             "Danger.TButton",
@@ -330,6 +341,10 @@ class App:
             ]
         )
 
+    # ==========================================================
+    # INTERFAZ PRINCIPAL
+    # ==========================================================
+
     def crear_interfaz(self):
         header_frame = tk.Frame(
             self.root,
@@ -357,6 +372,70 @@ class App:
         title_label.pack(
             side="left",
             padx=15
+        )
+
+        # ------------------------------------------------------
+        # PERFIL
+        # ------------------------------------------------------
+
+        perfil_frame = tk.Frame(
+            header_frame,
+            bg=self.COLORS["card_bg"]
+        )
+
+        perfil_frame.pack(
+            side="right",
+            padx=10
+        )
+
+        tk.Label(
+            perfil_frame,
+            text="Perfil:",
+            bg=self.COLORS["card_bg"],
+            fg=self.COLORS["text_dim"],
+            font=("Segoe UI", 9)
+        ).pack(
+            side="left",
+            padx=(0, 5)
+        )
+
+        self.perfil_var = tk.StringVar()
+
+        self.perfil_combo = ttk.Combobox(
+            perfil_frame,
+            textvariable=self.perfil_var,
+            state="readonly",
+            width=20
+        )
+
+        self.perfil_combo.pack(
+            side="left",
+            padx=5
+        )
+
+        self.perfil_combo.bind(
+            "<<ComboboxSelected>>",
+            self.cambiar_perfil
+        )
+
+        ttk.Button(
+            perfil_frame,
+            text="Nuevo",
+            style="Secondary.TButton",
+            command=self.nuevo_perfil
+        ).pack(
+            side="left",
+            padx=3
+        )
+
+        ttk.Button(
+            perfil_frame,
+            text="Guardar",
+            style="Primary.TButton",
+            command=self.guardar_perfil
+        ).pack(
+            side="left",
+            padx=3
         )
 
         self.crear_barrita_estado()
@@ -392,6 +471,11 @@ class App:
         )
 
         self.crear_tab_general()
+        self.actualizar_lista_perfiles()
+
+    # ==========================================================
+    # TAB GENERAL
+    # ==========================================================
 
     def crear_tab_general(self):
         frame = self.tab_general
@@ -420,9 +504,9 @@ class App:
             pady=(0, 15)
         )
 
-        # --------------------------------------------------
+        # ------------------------------------------------------
         # SENSIBILIDAD
-        # --------------------------------------------------
+        # ------------------------------------------------------
 
         ttk.Label(
             card,
@@ -465,9 +549,9 @@ class App:
             pady=5
         )
 
-        # --------------------------------------------------
+        # ------------------------------------------------------
         # DEADZONE
-        # --------------------------------------------------
+        # ------------------------------------------------------
 
         ttk.Label(
             card,
@@ -510,9 +594,9 @@ class App:
             pady=5
         )
 
-        # --------------------------------------------------
+        # ------------------------------------------------------
         # POLLING
-        # --------------------------------------------------
+        # ------------------------------------------------------
 
         ttk.Label(
             card,
@@ -558,24 +642,22 @@ class App:
             weight=1
         )
 
-        # --------------------------------------------------
-        # GUARDAR
-        # --------------------------------------------------
-
-        btn_guardar = ttk.Button(
+        ttk.Button(
             card,
             text="Guardar Cambios Generales",
             style="Primary.TButton",
             command=self.guardar
-        )
-
-        btn_guardar.grid(
+        ).grid(
             row=4,
             column=0,
             columnspan=2,
             sticky="ew",
             pady=(15, 0)
         )
+
+    # ==========================================================
+    # FOOTER
+    # ==========================================================
 
     def crear_barrita_estado(self):
         footer = tk.Frame(
@@ -622,10 +704,6 @@ class App:
             padx=5
         )
 
-        # --------------------------------------------------
-        # DETENER
-        # --------------------------------------------------
-
         self.btn_detener = ttk.Button(
             footer,
             text="Detener Motor",
@@ -638,10 +716,6 @@ class App:
             padx=5
         )
 
-        # --------------------------------------------------
-        # INICIAR
-        # --------------------------------------------------
-
         self.btn_iniciar = ttk.Button(
             footer,
             text="Iniciar Motor Mapper",
@@ -653,6 +727,10 @@ class App:
             side="right",
             padx=5
         )
+
+    # ==========================================================
+    # CONFIGURACIÓN GENERAL
+    # ==========================================================
 
     def guardar(self):
         try:
@@ -678,7 +756,22 @@ class App:
             )
 
             self.config.guardar()
+
             self.mapper.reload_config()
+
+            perfil_actual = (
+                self.profile_manager.perfil_actual
+            )
+
+            if perfil_actual:
+                self.profile_manager.guardar(
+                    perfil_actual
+                )
+
+                print(
+                    f"[+] Configuración general guardada "
+                    f"en perfil: {perfil_actual}"
+                )
 
             messagebox.showinfo(
                 "Joystick Mapper",
@@ -690,6 +783,303 @@ class App:
                 "Error",
                 "Valores numéricos inválidos."
             )
+
+        except Exception as error:
+            messagebox.showerror(
+                "Joystick Mapper",
+                f"No se pudo guardar la configuración:\n"
+                f"{error}"
+            )
+
+    # ==========================================================
+    # PERFILES
+    # ==========================================================
+
+    def actualizar_lista_perfiles(self):
+        perfiles = (
+            self.profile_manager.listar()
+        )
+
+        self.perfil_combo[
+            "values"
+        ] = perfiles
+
+        actual = (
+            self.profile_manager.perfil_actual
+        )
+
+        if actual in perfiles:
+            self.perfil_var.set(
+                actual
+            )
+
+    def nuevo_perfil(self):
+        ventana = tk.Toplevel(
+            self.root
+        )
+
+        ventana.title(
+            "Nuevo perfil"
+        )
+
+        ventana.geometry(
+            "320x150"
+        )
+
+        ventana.resizable(
+            False,
+            False
+        )
+
+        ventana.transient(
+            self.root
+        )
+
+        ventana.grab_set()
+
+        ttk.Label(
+            ventana,
+            text="Nombre del perfil:"
+        ).pack(
+            anchor="w",
+            padx=15,
+            pady=(15, 5)
+        )
+
+        nombre_var = tk.StringVar()
+
+        entrada = ttk.Entry(
+            ventana,
+            textvariable=nombre_var
+        )
+
+        entrada.pack(
+            fill="x",
+            padx=15
+        )
+
+        entrada.focus_set()
+
+        def crear():
+            nombre = (
+                nombre_var.get().strip()
+            )
+
+            if not nombre:
+                messagebox.showwarning(
+                    "Joystick Mapper",
+                    "Ingresa un nombre para el perfil.",
+                    parent=ventana
+                )
+                return
+
+            try:
+                nombre = (
+                    self.profile_manager.crear(
+                        nombre
+                    )
+                )
+
+            except FileExistsError:
+                messagebox.showwarning(
+                    "Joystick Mapper",
+                    "Ya existe un perfil con ese nombre.",
+                    parent=ventana
+                )
+                return
+
+            except ValueError as error:
+                messagebox.showwarning(
+                    "Joystick Mapper",
+                    str(error),
+                    parent=ventana
+                )
+                return
+
+            self.actualizar_lista_perfiles()
+
+            self.perfil_var.set(
+                nombre
+            )
+
+            ventana.destroy()
+
+            messagebox.showinfo(
+                "Joystick Mapper",
+                f"Perfil '{nombre}' creado."
+            )
+
+        ttk.Button(
+            ventana,
+            text="Crear perfil",
+            style="Primary.TButton",
+            command=crear
+        ).pack(
+            fill="x",
+            padx=15,
+            pady=15
+        )
+
+        ventana.bind(
+            "<Return>",
+            lambda event: crear()
+        )
+
+    def guardar_perfil(self):
+        nombre = (
+            self.perfil_var.get().strip()
+        )
+
+        if not nombre:
+            messagebox.showwarning(
+                "Joystick Mapper",
+                "Selecciona o crea un perfil primero."
+            )
+            return
+
+        # Primero aseguramos que los valores del
+        # panel General estén en config.
+        try:
+            self.config.set(
+                "sensibilidad_mouse",
+                float(
+                    self.sensibilidad_var.get()
+                )
+            )
+
+            self.config.set(
+                "deadzone",
+                float(
+                    self.deadzone_var.get()
+                )
+            )
+
+            self.config.set(
+                "polling_rate_ms",
+                int(
+                    self.polling_var.get()
+                )
+            )
+
+            self.config.guardar()
+
+        except ValueError:
+            messagebox.showerror(
+                "Joystick Mapper",
+                "Hay valores inválidos en la configuración general."
+            )
+            return
+
+        self.profile_manager.guardar(
+            nombre
+        )
+
+        self.mapper.reload_config()
+
+        messagebox.showinfo(
+            "Joystick Mapper",
+            f"Perfil '{nombre}' guardado correctamente."
+        )
+
+    def cambiar_perfil(self, event=None):
+        nuevo_perfil = self.perfil_var.get()
+
+        if not nuevo_perfil:
+            return
+
+        perfil_actual = (
+            self.profile_manager.perfil_actual
+        )
+
+        # Guardar automáticamente el perfil
+        # que estamos abandonando
+        if (
+            perfil_actual
+            and perfil_actual != nuevo_perfil
+        ):
+            try:
+                self.profile_manager.guardar(
+                    perfil_actual
+                )
+
+                print(
+                    f"[+] Perfil guardado: "
+                    f"{perfil_actual}"
+                )
+
+            except Exception as error:
+                messagebox.showerror(
+                    "Joystick Mapper",
+                    f"No se pudo guardar el perfil actual:\n"
+                    f"{error}"
+                )
+                return
+
+        # Si el mapper está funcionando,
+        # detenerlo antes de cambiar configuración
+        if self.mapper.running:
+            self.detener_mapper()
+
+        try:
+            self.profile_manager.cargar(
+                nuevo_perfil
+            )
+
+        except FileNotFoundError:
+            messagebox.showerror(
+                "Joystick Mapper",
+                "No se encontró el perfil seleccionado."
+            )
+            return
+
+        except Exception as error:
+            messagebox.showerror(
+                "Joystick Mapper",
+                f"No se pudo cargar el perfil:\n"
+                f"{error}"
+            )
+            return
+
+        self.mapper.reload_config()
+
+        # Actualizar interfaz General
+        self.sensibilidad_var.set(
+            float(
+                self.config.get(
+                    "sensibilidad_mouse",
+                    15.0
+                )
+            )
+        )
+
+        self.deadzone_var.set(
+            float(
+                self.config.get(
+                    "deadzone",
+                    0.15
+                )
+            )
+        )
+
+        self.polling_var.set(
+            str(
+                self.config.get(
+                    "polling_rate_ms",
+                    5
+                )
+            )
+        )
+
+        # Actualizar joystick visual
+        self.tab_joystick.actualizar_dispositivo()
+
+        print(
+            f"[+] Perfil cargado: "
+            f"{nuevo_perfil}"
+        )
+    # ==========================================================
+    # MOTOR
+    # ==========================================================
 
     def iniciar_mapper(self):
         if self.mapper.running:
@@ -716,8 +1106,8 @@ class App:
             foreground=self.COLORS["success"]
         )
 
-        self.ciclo_mapper() 
-        
+        self.ciclo_mapper()
+
     def ciclo_mapper(self):
         if not self.mapper.running:
             return
@@ -745,5 +1135,30 @@ class App:
             foreground=self.COLORS["text_dim"]
         )
 
+    # ==========================================================
+    # RUN
+    # ==========================================================
+
     def run(self):
         self.root.mainloop()
+
+    def cerrar_app(self):
+        perfil_actual = (
+            self.profile_manager.perfil_actual
+        )
+
+        if perfil_actual:
+            try:
+                self.profile_manager.guardar(
+                    perfil_actual
+                )
+
+            except Exception as error:
+                print(
+                    f"[-] Error guardando perfil: "
+                    f"{error}"
+                )
+
+        self.mapper.stop()
+
+        self.root.destroy()
